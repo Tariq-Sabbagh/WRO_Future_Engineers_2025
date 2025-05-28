@@ -1,4 +1,7 @@
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 #include <Servo.h>
 #include <NewPing.h>
 
@@ -28,7 +31,7 @@ float angle = 0;
 float kp=2.9;
 float previousAngle=0;
 int offsetGyroNow;
-int turn=0;
+int turncnt=0;
 int centerServo=87;
 unsigned long previousMillis = -1750;  
 
@@ -44,7 +47,7 @@ void go_Right()
     {
         offsetGyro+=90;
         moveStraight();
-        turn++;}
+        turncnt++;}
     
 }
 
@@ -54,10 +57,10 @@ void turn_Right()
   if (currentMillis - previousMillis >= 2000 && turn <= 11) {
     if(error<abs(15)){
     if(sonar_front.ping_cm()<=60 && sonar_front.ping_cm()>1){
-      if(sonar_Right_front.ping_cm()>=120 || sonar_Right_front ==0){
+      if(sonar_Right_front.ping_cm()>=120 || sonar_Right_front.ping_cm() ==0){
       previousMillis=currentMillis;
       Serial.println(error);
-      turn++;
+      turncnt++;
      offsetGyro+=90;
     }
     }
@@ -72,7 +75,7 @@ void turn_left()
     if(sonar_front.ping_cm()<=60 && sonar_front.ping_cm()>1){
       if(sonar_left_front.ping_cm()>=120 || sonar_left_front.ping_cm()==0){
       previousMillis=currentMillis;
-      turn++;
+      turncnt++;
      offsetGyro-=90;
     }
     }
