@@ -7,10 +7,11 @@
 #include "core/IMU.h"
 #include <Wire.h> 
 #include "Adafruit_VL53L0X.h"
+#include "core/Timer.h"
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
-
+Servo servo;
 // Instantiate objects specifically for testing
 MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
 Steering testSteering(SERVO_PIN);
@@ -155,7 +156,7 @@ void test_imu() {
     
     Serial.println("Calibrating IMU... Keep it flat and still.");
     wait(1000, "Sensor Settling");
-    testImu.calibrate();
+    testImu.getHeading();
     
     Serial.println("Rotate the car. Heading should change relative to start.");
     Serial.println("Time\tHeading");
@@ -177,16 +178,16 @@ void runHardwareTests() {
     Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
     
     // test_motors();
-    test_steering();
-    test_distance_sensors();
-    // test_imu();
+    // test_steering();
+    // test_distance_sensors();
+    test_imu();
     // test_wire();
     // test_TOF();
     
-    // Serial.println("\n===== ALL TESTS COMPLETE =====");
-    // Serial.println("Reset device to run again.");
-    // while(true) {
-    //   // Loop forever
-    // }
+    Serial.println("\n===== ALL TESTS COMPLETE =====");
+    Serial.println("Reset device to run again.");
+    while(true) {
+      // Loop forever
+    }
 }
 

@@ -1,145 +1,145 @@
 #include "Car.h"
-#include "../config.h"
-
-
-float offsetGyro=0;
-int offsetGyroNow;
-
 
 Car::Car() :
     _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
     _steering(SERVO_PIN),
     _distSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
-    _imu()
+    _imu(),
+    _button(BUTTON_PIN)
 {
-    // Initialize navigation variables
-    _targetHeading = 0.0;
+    // Initialize state variables
+    _offsetGyro = 0.0f;
     _turnCounter = 0;
-    _lastTurnTime = 0;
+    _previousTurnMillis = 0;
+    error = 0.0f;
 }
 
 void Car::setup() {
     // Setup all hardware components
-   
+    _motors.setup();
+    _steering.setup();
+    _button.setup();
+    _pid.setup(STEERING_KP, 0, 0); // Example values for kp, ki, kd
+    _pid.setOutputLimits(45, 135);
+    
     if (!_imu.setup()) {
         // If IMU fails, halt everything.
-        stopAll();
-        while(true);
+        _stopAndHalt();
     }
-    _steering.setup();
 
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
     Serial.println("All components initialized.");
     Serial.println("Press the button to start calibration and run...");
 
-    // Wait for the start button to be pressed
-    while(digitalRead(BUTTON_PIN) == HIGH) {
-        delay(10);
-    }
+    _button.waitForPress(); // Wait for the start button
     Serial.println("Button pressed! Calibrating...");
-    delay(500); // Debounce and wait
+    Timer::wait(1500);
+    // delay(1500);
+    
+    _imu.update(); // Get initial reading
+    _offsetGyro = _imu.getHeading(); // Set initial offset
+    _previousTurnMillis = millis(); // Initialize turn timer
 
-    // Calibrate sensors
-    _imu.calibrate();
-    offsetGyro=_imu.getHeading();
-    _motors.setup();
-    _targetHeading = 0.0;
-    _lastTurnTime = millis();
     Serial.println("Calibration complete. Starting main loop.");
 }
 
 void Car::loop() {
-    // The main execution block
     _imu.update(); // Always get the latest sensor data first
     
-    navigate();
+    _moveStraight();
 
-   
-
-    // Check for end condition (e.g., 12 turns)
+    // Check for end condition
     if (_turnCounter >= 12) {
-        Serial.println("Run complete (12 turns). Stopping.");
-        stopAll();
-        while(true); // Halt execution
-    }
-}
-
-void Car::navigate() {
-    // 1. Check for necessary turns
-    if(offsetGyro==360)
-  {
-    offsetGyro=0;
-  }
-   offsetGyroNow=_imu.getHeading()-offsetGyro;
-
-     if(offsetGyroNow>180)
-   {
-    offsetGyroNow-=360;
-   }
-
-    // 2. Implement PID controller for staying straight
-    float currentError = offsetGyroNow - _targetHeading;
-
-    float steeringAdjustment = currentError * STEERING_KP;
-
-    // Serial.println(_imu.getHeading());
-
-    
-    _steering.setAngle(steeringAdjustment);
-
-    Serial.println(currentError);
-
-    Serial.print("Wall ahead! F: "); Serial.print(_distSensors.getFrontCm());
-    Serial.print(" R: "); Serial.print(_distSensors.getRightCm());
-    Serial.print(" L: "); Serial.println(_distSensors.getLeftCm());
-
-
-    
-    // 3. Move forward
-    // _motors.forward(FORWARD_SPEED);
-
-    if (currentError < abs(15)){
-    checkForTurns();
-}
-}
-
-void Car::checkForTurns() {
-    // Don't check for another turn if we just made one
-    if (millis() - _lastTurnTime < TURN_COOLDOWN_MS) {
-        return;
-    }
-
-    float frontDist = _distSensors.getFrontCm();
-
-    // Only consider turning if the front sensor reads a valid, close distance
-    if (frontDist > 1 && frontDist <= TURN_DECISION_DISTANCE_CM) {
-        float rightDist = _distSensors.getRightCm();
-        float leftDist = _distSensors.getLeftCm();
-
-    
-        
-        Serial.print("Wall ahead! F: "); Serial.print(frontDist);
-        Serial.print(" R: "); Serial.print(rightDist);
-        Serial.print(" L: "); Serial.println(leftDist);
-
-        // Prefer turning right if there's space
-        if (rightDist == 0 || rightDist > TURN_CLEARANCE_DISTANCE_CM) {
-            Serial.println(">>> Turning RIGHT");
-            offsetGyro += 90.0;
-            _turnCounter++;
-            _lastTurnTime = millis();
-        } 
-        // Otherwise, turn left if there's space
-        else if (leftDist == 0 || leftDist > TURN_CLEARANCE_DISTANCE_CM) {
-            Serial.println(">>> Turning LEFT");
-            offsetGyro -= 90.0;
-            _turnCounter++;
-            _lastTurnTime = millis();
+        // Your original code had a 1-second delay check here.
+        if (millis() - _previousTurnMillis >= 1000) {
+             _stopAndHalt();
         }
     }
 }
 
-void Car::stopAll() {
+void Car::_moveStraight() {
+    // This method is a direct translation of your original moveStraight()
+    // _checkForTurns(); 
+    
+    float currentHeading = _imu.getHeading();
+    float error = currentHeading ;
+    Serial.print(error);
+    Serial.print(" ");
+    Serial.print(currentHeading);
+    Serial.print(" ");
+    Serial.println(_offsetGyro);
+
+
+    
+    // angle = 0;
+    // _steering.setAngle(angle);
+    _motors.forward(FORWARD_SPEED);
+}
+
+void Car::_checkForTurns() {
+    // Combined turn_Right and turn_left logic
+    unsigned long currentMillis = millis();
+    if (currentMillis - _previousTurnMillis < TURN_COOLDOWN_MS || _turnCounter > 11) {
+        return;
+    }
+
+    Serial.print(" left");Serial.print(_distSensors.getLeftCm());
+    Serial.print(" right");Serial.print(_distSensors.getRightCm());
+    Serial.print(" front");Serial.println(_distSensors.getFrontCm());
+    
+    if(abs(error) < 15) {
+        if(_turnCounter < 1)
+        {
+            // _turnLeft();
+            _turnRight();
+        }
+
+        else
+        {
+            if(direction=="right")
+            {
+                _turnRight();
+            }
+            else if(direction=="left")
+            {
+                _turnLeft();
+            }
+        }
+       
+
+           
+        }
+    }
+
+
+void Car::_turnRight() {
+     float frontDist = _distSensors.getFrontCm();
+        if (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) {
+            float rightDist = _distSensors.getRightCm();
+            if (rightDist >= TURN_CLEARANCE_DISTANCE_CM || rightDist == 0) {
+                direction ="right";
+                Serial.println(">>> Turning RIGHT");
+                _previousTurnMillis = millis();
+                _turnCounter++;
+                _offsetGyro += 90.0f;
+            }
+        }
+}
+
+void Car::_turnLeft() {
+     float leftDist = _distSensors.getLeftCm();
+            if (leftDist >= TURN_CLEARANCE_DISTANCE_CM || leftDist == 0) {
+                direction ="left";
+                Serial.println(">>> Turning LEFT");
+                _previousTurnMillis = millis();
+                _turnCounter++;
+                _offsetGyro -= 90.0f;
+              
+            }
+}
+
+void Car::_stopAndHalt() {
     _motors.stop();
     _steering.center();
+    Serial.println("Execution halted.");
+    while (true); // Loop forever
 }

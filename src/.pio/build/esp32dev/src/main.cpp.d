@@ -149,4 +149,16 @@
  .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/vector.h \
  .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/quaternion.h \
  .pio/libdeps/esp32dev/Adafruit\ BusIO/Adafruit_I2CDevice.h \
- .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/imumaths.h
+ .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/imumaths.h \
+ src/core/Button.h src/core/PIDController.h src/core/Timer.h \
+ src/test/Tests.h src/core/MotorController.h src/core/Steering.h \
+ src/core/DistanceSensors.h src/core/IMU.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/Adafruit_VL53L0X.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_api.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_api_strings.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_def.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_device.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_types.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_platform.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_i2c_platform.h \
+ .pio/libdeps/esp32dev/Adafruit_VL53L0X/src/vl53l0x_platform_log.h

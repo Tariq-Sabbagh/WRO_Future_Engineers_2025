@@ -143,5 +143,4 @@
  .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/vector.h \
  .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/quaternion.h \
  .pio/libdeps/esp32dev/Adafruit\ BusIO/Adafruit_I2CDevice.h \
- .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/imumaths.h \
- src/core/../config.h
+ .pio/libdeps/esp32dev/Adafruit\ BNO055/utility/imumaths.h
