@@ -16,5 +16,5 @@ void IMU::update() {
 }
 
 float IMU::getHeading() {
-    return (360 - _event.orientation.x)%360; // Return the raw absolute heading
+    return _event.orientation.x; // Return the raw absolute heading
 }
