@@ -5,20 +5,24 @@
 #include "core/Steering.h"
 #include "core/DistanceSensors.h"
 #include "core/IMU.h"
-#include <Wire.h> 
+#include <Wire.h>
 #include "Adafruit_VL53L0X.h"
 #include "core/Timer.h"
 #include "core/PIDController.h"
-
+#include <AS5600.h>
+#include "core/Button.h"
+#include "core/Car.h"
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
 Servo servo;
+Button button(BUTTON_PIN);
 // Instantiate objects specifically for testing
 MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
 Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
+AS5600 encoder;
 
 /**
  * @brief A simple blocking wait function, an alternative to delay().
@@ -26,189 +30,272 @@ IMU testImu;
  * @param duration_ms The time to wait in milliseconds.
  * @param message An optional message to print.
  */
-void wait(unsigned long duration_ms, const char* message = "") {
-    if (strlen(message) > 0) {
-        Serial.print("  > Waiting ");
-        Serial.print(duration_ms);
-        Serial.print("ms (");
-        Serial.print(message);
-        Serial.println(")...");
-    }
-    delay(duration_ms);
-}
-
-
-void wait_for_button(const char* message) {
-    Serial.println("----------------------------------------");
-    Serial.print("Press button to start test: ");
-    Serial.println(message);
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-    while(digitalRead(BUTTON_PIN) == HIGH) {
-        delay(10);
-    }
-    Serial.println("...starting test.");
-    wait(500, "Debouncing"); // Use our new wait function
+void wait(unsigned long duration_ms, const char *message = "")
+{
+  if (strlen(message) > 0)
+  {
+    Serial.print("  > Waiting ");
+    Serial.print(duration_ms);
+    Serial.print("ms (");
+    Serial.print(message);
+    Serial.println(")...");
+  }
+  delay(duration_ms);
 }
 
 void test_TOF()
 {
+  button.waitForPress("TOF Test (10 seconds)");
   VL53L0X_RangingMeasurementData_t measure;
-    
+
   Serial.print("Reading a measurement... ");
   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
 
-  if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-    Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
-  } else {
+  if (measure.RangeStatus != 4)
+  { // phase failures have incorrect data
+    Serial.print("Distance (mm): ");
+    Serial.println(measure.RangeMilliMeter);
+  }
+  else
+  {
     Serial.println(" out of range ");
   }
-    
+
   delay(100);
 }
 
 void test_wire()
 {
+  button.waitForPress("wire Test (10 seconds)");
   byte error, address;
   int nDevices = 0;
 
   delay(1000);
 
   Serial.println("Scanning for I2C devices ...");
-  for (address = 0x01; address < 0x7f; address++) {
+  for (address = 0x01; address < 0x7f; address++)
+  {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
-    if (error == 0) {
+    if (error == 0)
+    {
       Serial.printf("I2C device found at address 0x%02X\n", address);
       nDevices++;
-    } else if (error != 2) {
+    }
+    else if (error != 2)
+    {
       Serial.printf("Error %d at address 0x%02X\n", error, address);
     }
   }
-  if (nDevices == 0) {
+  if (nDevices == 0)
+  {
     Serial.println("No I2C devices found");
   }
 }
 
-void test_motors() {
-    wait_for_button("Motor Test");
-    testMotors.setup();
+void test_motors()
+{
+  button.waitForPress("Motor Test");
+  testMotors.setup();
 
-    Serial.println("Moving FORWARD...");
-    testMotors.forward(FORWARD_SPEED);
-    wait(2000, "Forward Motion");
+  Serial.println("Moving FORWARD...");
+  testMotors.forward(FORWARD_SPEED);
+  wait(2000, "Forward Motion");
 
-    Serial.println("STOPPING...");
-    testMotors.stop();
-    wait(1000, "Brake");
+  Serial.println("STOPPING...");
+  testMotors.stop();
+  wait(1000, "Brake");
 
-    Serial.println("Moving BACKWARD...");
-    testMotors.backward(FORWARD_SPEED);
-    wait(2000, "Backward Motion");
+  Serial.println("Moving BACKWARD...");
+  testMotors.backward(FORWARD_SPEED);
+  wait(2000, "Backward Motion");
 
-    testMotors.stop();
-    Serial.println("Motor test complete.");
+  testMotors.stop();
+  Serial.println("Motor test complete.");
 }
 
-void test_steering() {
-    wait_for_button("Steering Test");
-    testSteering.setup();
+void test_encoder()
+{
+  button.waitForPress("encoder Test (10 seconds)");
+  int lastAngle = 0;
+  float totalAngle = 0.0; // Accumulated angle
+  float distance = 0.0;
+  Wire.begin();
 
-    Serial.println("Turning LEFT...");
-    testSteering.setAngle(SERVO_CENTER_ANGLE - 45);
-    wait(2000, "Full Left");
+  if (!encoder.begin())
+  {
+    Serial.println("Encoder not detected!");
+    while (1)
+      ;
+  }
 
-    Serial.println("CENTERING...");
-    testSteering.center();
-    wait(2000, "Center");
+  lastAngle = encoder.readAngle();
+  unsigned long startTime = millis();
+  while (millis() - startTime < 10000)
+  {
+    // testMotors.forward(FORWARD_SPEED);
+    int currentAngle = encoder.readAngle();
+    int delta = currentAngle - lastAngle;
+    // Serial.println(delta);
+    // Handle wrap-around from 4095 to 0 or 0 to 4095
+    if (delta > 2048)
+      delta -= 4096;
+    else if (delta < -2048)
+      delta += 4096;
 
-    Serial.println("Turning RIGHT...");
-    testSteering.setAngle(SERVO_CENTER_ANGLE + 45);
-    wait(2000, "Full Right");
-    
-    testSteering.center();
-    Serial.println("Steering test complete.");
+    totalAngle += delta;
+    lastAngle = currentAngle;
+
+    // Convert total angle to distance (cm)
+    distance = (totalAngle / 4096.0) * 42.7256;
+
+    Serial.print("Distance (cm): ");
+    Serial.println(distance);
+
+    delay(100); // adjust as needed
+  }
+
+  // testMotors.stop();
 }
 
-void test_distance_sensors() {
-    wait_for_button("Distance Sensor Test (10 seconds)");
-    Serial.println("Move objects in front of sensors. Readings are in CM.");
-    Serial.println("Time\tFront\tLeft\tRight");
+void test_steering()
+{
+  button.waitForPress("Steering Test");
+  testSteering.setup();
 
-    unsigned long startTime = millis();
-    while(millis() - startTime < 100000) {
-        float front = testDistSensors.getFrontCm();
-        float left = testDistSensors.getLeftCm();
-        float right = testDistSensors.getRightCm();
+  Serial.println("Turning LEFT...");
+  testSteering.setAngle(SERVO_CENTER_ANGLE - 45);
+  wait(2000, "Full Left");
 
-        Serial.print(millis() / 1000.0); Serial.print("s\t");
-        Serial.print(front); Serial.print("\t");
-        Serial.print(left); Serial.print("\t");
-        Serial.println(right);
-        wait(500); // Poll every half second
-    }
-    Serial.println("Distance sensor test complete.");
+  Serial.println("CENTERING...");
+  testSteering.center();
+  wait(2000, "Center");
+
+  Serial.println("Turning RIGHT...");
+  testSteering.setAngle(SERVO_CENTER_ANGLE + 45);
+  wait(2000, "Full Right");
+
+  testSteering.center();
+  Serial.println("Steering test complete.");
 }
 
-void test_imu() {
-    wait_for_button("IMU Heading Test (10 seconds)");
-    if (!testImu.setup()) {
-        Serial.println("IMU failed to initialize. Test aborted.");
-        return;
-    }
-    
-    Serial.println("Calibrating IMU... Keep it flat and still.");
-    wait(1000, "Sensor Settling");
-    testImu.getHeading();
-    
-    Serial.println("Rotate the car. Heading should change relative to start.");
-    Serial.println("Time\tHeading");
-    
-    unsigned long startTime = millis();
-    while(millis() - startTime < 10000) {
-        testImu.update();
-        float heading = testImu.getHeading();
-        
-        Serial.print(millis() / 1000.0); Serial.print("s\t");
-        Serial.println(heading);
-        wait(250); // Poll every quarter second
-    }
-    Serial.println("IMU test complete.");
+void test_distance_sensors()
+{
+  button.waitForPress("Distance Sensor Test (10 seconds)");
+  Serial.println("Move objects in front of sensors. Readings are in CM.");
+  Serial.println("Time\tFront\tLeft\tRight");
+
+  unsigned long startTime = millis();
+  while (millis() - startTime < 50000)
+  {
+    float front = testDistSensors.getFrontCm();
+    float left = testDistSensors.getLeftCm();
+    float right = testDistSensors.getRightCm();
+
+    Serial.print(millis() / 1000.0);
+    Serial.print("s\t");
+    Serial.print(front);
+    Serial.print("\t");
+    Serial.print(left);
+    Serial.print("\t");
+    Serial.println(right);
+    // wait(500); // Poll every half second
+  }
+  Serial.println("Distance sensor test complete.");
 }
 
-void test_pid_controller(){
+void test_imu()
+{
+  button.waitForPress("IMU Heading Test (10 seconds)");
+  if (!testImu.setup())
+  {
+    Serial.println("IMU failed to initialize. Test aborted.");
+    return;
+  }
+
+  Serial.println("Calibrating IMU... Keep it flat and still.");
+  wait(1000, "Sensor Settling");
+  testImu.getHeading();
+
+  Serial.println("Rotate the car. Heading should change relative to start.");
+  Serial.println("Time\tHeading");
+
+  Timer timer;
+  timer.start(10000);
+  while (!timer.isFinished())
+  {
+    testImu.update();
+    float heading = testImu.getHeading();
+
+    Serial.print(millis() / 1000.0);
+    Serial.print("s\t");
+    Serial.println(heading);
+    wait(250); // Poll every quarter second
+  }
+
+  button.waitForPress("Reset IMU");
+  testImu.reset();
+
+  timer.start(4000);
+  while (!timer.isFinished())
+  {
+    testImu.update();
+    float heading = testImu.getHeading();
+
+    Serial.print(millis() / 1000.0);
+    Serial.print("s\t");
+    Serial.println(heading);
+    wait(250); // Poll every quarter second
+  }
+
+  Serial.println("IMU test complete.");
+}
+
+void test_pid_controller()
+{
 
   PIDController pid;
-  pid.setup(0.9,0,0);
-  pid.setOutputLimits(-45,45);
+  pid.setup(0.9, 0, 0);
+  pid.setOutputLimits(-45, 45);
   unsigned long startTime = millis();
-    while(millis() - startTime < 10000) {
-      float correction = pid.compute(0,50);
-      Serial.println(correction);
-      correction = pid.compute(0,0);
-      Serial.println(correction);
-      correction = pid.compute(0,-50);
-      Serial.println(correction);
-    }
-
+  while (millis() - startTime < 10000)
+  {
+    float correction = pid.compute(0, 50);
+    Serial.println(correction);
+    correction = pid.compute(0, 0);
+    Serial.println(correction);
+    correction = pid.compute(0, -50);
+    Serial.println(correction);
+  }
 }
-void runHardwareTests() {
-    
+
+void test_turn()
+{
+  Car myCar;
+  myCar.setup();
+  button.waitForPress("Turn 90");
+  myCar._turn(90);
+  
+}
+
+void runHardwareTests()
+{
+
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
-    
-    // test_motors();
 
-    // test_steering();
-    // test_distance_sensors();
-    test_wire();
-    test_imu();
-    // test_TOF();
-    
-    Serial.println("\n===== ALL TESTS COMPLETE =====");
-    Serial.println("Reset device to run again.");
-    while(true) {
-      // Loop forever
-    }
+  // test_motors();
+  // test_steering();
+  // test_distance_sensors();
+  // test_wire();
+  // test_imu();
+  //  test_encoder();
+  // test_TOF();
+  test_turn();
+
+  Serial.println("\n===== ALL TESTS COMPLETE =====");
+  Serial.println("Reset device to run again.");
+  while (true)
+  {
+    // Loop forever
+  }
 }
-
-
-

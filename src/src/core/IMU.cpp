@@ -8,13 +8,41 @@ bool IMU::setup() {
         return false;
     }
     _bno.setExtCrystalUse(true);
+    reset();
     return true;
 }
 
 void IMU::update() {
-    _bno.getEvent(&_event);
+    sensors_event_t event;
+    _bno.getEvent(&event);
+
+    // Convert heading from [0, 360) to [-180, 180)
+    float rawHeading = event.orientation.x;
+    if (rawHeading > 180.0f) {
+        rawHeading -= 360.0f;
+    }
+
+    // Apply offset (reset)
+    _heading = rawHeading - _offset;
+
+    // Normalize result to -180..180 again after offset
+    if (_heading > 180.0f) _heading -= 360.0f;
+    if (_heading < -180.0f) _heading += 360.0f;
 }
 
 float IMU::getHeading() {
-    return _event.orientation.x; // Return the raw absolute heading
+    return _heading;
+}
+
+void IMU::reset() {
+    sensors_event_t event;
+    _bno.getEvent(&event);
+
+    // Store current heading as offset
+    float rawHeading = event.orientation.x;
+    if (rawHeading > 180.0f) {
+        rawHeading -= 360.0f;
+    }
+
+    _offset = rawHeading;
 }
