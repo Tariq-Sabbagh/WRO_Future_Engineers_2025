@@ -8,6 +8,7 @@ MotorController::MotorController(int dir1_pin, int dir2_pin, int speed_pin) {
 }
 
 void MotorController::setup() {
+    Serial.println("Setting up Motors....");
     pinMode(_dir1_pin, OUTPUT);
     pinMode(_dir2_pin, OUTPUT);
     pinMode(_speed_pin,OUTPUT);

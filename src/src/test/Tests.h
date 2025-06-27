@@ -12,6 +12,7 @@
 #include <AS5600.h>
 #include "core/Button.h"
 #include "core/Car.h"
+#include "core/Encoder.h"
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
@@ -22,7 +23,7 @@ MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
 Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
-AS5600 encoder;
+Encoder encoder;
 
 /**
  * @brief A simple blocking wait function, an alternative to delay().
@@ -117,45 +118,25 @@ void test_motors()
 void test_encoder()
 {
   button.waitForPress("encoder Test (10 seconds)");
-  int lastAngle = 0;
-  float totalAngle = 0.0; // Accumulated angle
-  float distance = 0.0;
   Wire.begin();
 
-  if (!encoder.begin())
-  {
+  if (!encoder.begin()) {
     Serial.println("Encoder not detected!");
-    while (1)
-      ;
+    while (1);
   }
 
-  lastAngle = encoder.readAngle();
-  unsigned long startTime = millis();
+  unsigned long startTime = millis(); 
   while (millis() - startTime < 10000)
   {
-    // testMotors.forward(FORWARD_SPEED);
-    int currentAngle = encoder.readAngle();
-    int delta = currentAngle - lastAngle;
-    // Serial.println(delta);
-    // Handle wrap-around from 4095 to 0 or 0 to 4095
-    if (delta > 2048)
-      delta -= 4096;
-    else if (delta < -2048)
-      delta += 4096;
-
-    totalAngle += delta;
-    lastAngle = currentAngle;
-
-    // Convert total angle to distance (cm)
-    distance = (totalAngle / 4096.0) * 42.7256;
-
+    testMotors.forward(FORWARD_SPEED);
+    encoder.update();
     Serial.print("Distance (cm): ");
-    Serial.println(distance);
+    Serial.println(encoder.getDistanceCm());
 
     delay(100); // adjust as needed
   }
 
-  // testMotors.stop();
+  testMotors.stop();
 }
 
 void test_steering()
@@ -288,9 +269,9 @@ void runHardwareTests()
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  //  test_encoder();
+   test_encoder();
   // test_TOF();
-  test_turn();
+  // test_turn();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");
   Serial.println("Reset device to run again.");

@@ -8,6 +8,7 @@
 #include "IMU.h"
 #include "Button.h"
 #include "core/Timer.h"
+#include "core/Encoder.h"
 
 class Car
 {
@@ -19,6 +20,8 @@ public:
     IMU _imu;
     Button _button;
     PIDController _pid;
+    Encoder _encoder;
+    
 
     // State
     int _turnCounter;
