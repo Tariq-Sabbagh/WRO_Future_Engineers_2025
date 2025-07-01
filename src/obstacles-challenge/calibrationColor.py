@@ -8,7 +8,9 @@ app = Flask(__name__)
 
 # Initialize Pi Camera
 picam2 = Picamera2()
-config = picam2.create_video_configuration(main={"size": (640, 480)})
+wedth=int(4608/2)
+high=int(2592/2)
+config = picam2.create_video_configuration(main={"size": (wedth, high)})
 picam2.configure(config)
 picam2.start()
 time.sleep(2)  # Camera warm-up
@@ -34,12 +36,9 @@ def set_lab():
 @app.route('/video_feed')
 def video_feed():
     def generate():
-       while True:
+        while True:
             frame = picam2.capture_array()
-
-            # ➕ Add flipping
-            frame = cv2.flip(frame, -1)  # Flip horizontally
-
+            frame = cv2.flip(frame, -1)
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
 
             lower = (
@@ -53,8 +52,27 @@ def video_feed():
                 lab_range["b_max"]
             )
 
-            mask = cv2.inRange(lab, lower, upper)
-            result = cv2.bitwise_and(frame, frame, mask=mask)
+            # LAB mask
+            lab_mask = cv2.inRange(lab, lower, upper)
+
+            # Create polygon mask for field
+            # mask_field = np.zeros(frame.shape[:2], dtype=np.uint8)
+            
+            # Define polygon points based on your field shape in the image
+            # polygon_points = np.array([
+            #     [0, 880],   # bottom-left
+            #     [4608, 880],  # bottom-right
+            #     [4608, 2000],  # top-right
+            #     [0, 2000],   # top-left
+            # ])
+
+            # cv2.fillPoly(mask_field, [polygon_points], 255)
+
+            # Combine the two masks (field AND color filter)
+            combined_mask = cv2.bitwise_and(lab_mask, lab_mask, mask=lab_mask)
+
+            # Apply the combined mask
+            result = cv2.bitwise_and(frame, frame, mask=combined_mask)
 
             _, buffer = cv2.imencode('.jpg', result)
             frame_bytes = buffer.tobytes()
@@ -62,7 +80,6 @@ def video_feed():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 
 # Inline HTML Template
 HTML_PAGE = '''

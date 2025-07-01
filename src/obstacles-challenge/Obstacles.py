@@ -23,7 +23,10 @@ arduino = None # Start with no connection
 def initialize_camera():
     global picam2
     picam2 = Picamera2()
-    config = picam2.create_preview_configuration(main={"size": (4608 , 2592 )})
+    # --- CHANGE: Updated to user-specified resolution ---
+    # WARNING: High resolution can cause significant performance issues.
+    # Consider (1920, 1080) or (1280, 720) for better real-time performance.
+    config = picam2.create_preview_configuration(main={"size": (4608, 2592)})
     picam2.configure(config)
     picam2.start()
     print("Camera initialized.")
@@ -34,7 +37,6 @@ def initialize_serial(port, baudrate):
         arduino = serial.Serial(port=port, baudrate=baudrate, timeout=0.1)
         print(f"Serial connection established on {port}.")
     except serial.SerialException:
-        # Don't print an error here, as we will be retrying
         arduino = None
 
 def detect_color_in_lab(lab_frame, lower_bound, upper_bound):
@@ -45,7 +47,6 @@ def detect_color_in_lab(lab_frame, lower_bound, upper_bound):
     return mask
 
 def find_largest_contour(mask, min_area=200):
-    # --- CHANGE: Lowered min_area from 1000 to 200 ---
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if not contours: return None
     largest_contour = max(contours, key=cv2.contourArea)
@@ -69,7 +70,7 @@ def calculate_maneuver(frame_shape, bounding_rect, distance_cm):
         offset_y_cm = 0
     travel_distance = np.sqrt(offset_y_cm**2 + (offset_x_cm + 15)**2)
     if offset_y_cm == 0:
-        turn_angle_rad = np.pi / 2
+        turn_angle_rad = np.pi / 2 if offset_x_cm > 0 else -np.pi / 2
     else:
         turn_angle_rad = np.arctan((offset_x_cm + 15) / offset_y_cm)
     turn_angle_deg = np.degrees(turn_angle_rad)
@@ -80,26 +81,27 @@ def generate_frames():
     """Processes frames and handles serial communication errors gracefully."""
     global arduino, picam2
     
-    lab_green_lower = np.array([0, 0, 132])
-    lab_green_upper = np.array([255, 120, 255])
-    lab_red_lower = np.array([0, 0, 0])
-    lab_red_upper = np.array([81, 255, 102])
+    lab_green_lower = np.array([83, 0, 0])
+    lab_green_upper = np.array([113, 113, 255])
+    
+    lab_red_lower = np.array([0, 131, 0])
+    lab_red_upper = np.array([142, 255, 134])
 
     while True:
-        # --- NEW: Check for connection and try to reconnect if lost ---
         if arduino is None:
             initialize_serial(SERIAL_PORT, BAUDRATE)
-            if arduino is None: # Still no connection
-                # Draw a warning on the frame
-                frame = np.zeros((720, 1280, 3), dtype=np.uint8)
-                cv2.putText(frame, "ESP32 Disconnected", (50, 360), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+            if arduino is None:
+                # Create a black frame for the warning message
+                # Use the configured resolution
+                w, h = picam2.camera_properties['PixelArraySize']
+                frame = np.zeros((h, w, 3), dtype=np.uint8)
+                cv2.putText(frame, "ESP32 Disconnected", (50, int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 if flag:
                     yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
-                time.sleep(1) # Wait before retrying connection
-                continue # Skip the rest of the loop
+                time.sleep(1)
+                continue
         
-        # --- Normal processing ---
         frame = picam2.capture_array()
         frame = cv2.flip(frame, -1)
         
@@ -107,45 +109,36 @@ def generate_frames():
         frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
 
         red_mask = detect_color_in_lab(frame_lab, lab_red_lower, lab_red_upper)
-        # green_mask = detect_color_in_lab(frame_lab, lab_green_lower, lab_green_upper)
         red_contour = find_largest_contour(red_mask)
-        # green_contour = find_largest_contour(green_mask)
         
-        # --- NEW LOGIC: Choose the CLOSEST (Taller) object, not the LARGEST ---
-        primary_contour = None
-        if red_contour is not None :
-            # Get the height of the bounding box for each contour
-            _, _, _, h_red = cv2.boundingRect(red_contour)
-            # _, _, _, h_green = cv2.boundingRect(green_contour)
-            # The contour with the greater height is closer to the camera
-            primary_contour = red_contour 
-        elif red_contour is not None:
-            primary_contour = red_contour
-        # elif green_contour is not None:
-        #     primary_contour = green_contour
-        # --- END OF NEW LOGIC ---
-
-        if primary_contour is not None: # Changed from largest_contour
-            x, y, w, h = cv2.boundingRect(primary_contour)
+        if red_contour is not None:
+            x, y, w, h = cv2.boundingRect(red_contour)
             cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
             distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, h)
             travel_dist, turn_angle = calculate_maneuver(frame_rgb.shape, (x, y, w, h), distance)
             info_text = f"Dist: {travel_dist:.1f}cm, Angle: {turn_angle:.1f}deg"
             cv2.putText(frame_rgb, info_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             
-            # --- Try-except block for writing data ---
             try:
                 dist_int = int(travel_dist * 10)
-                angle_int = int(turn_angle * 10)
-                packed_data = struct.pack('<HH', dist_int, angle_int)
-                arduino.write(packed_data)
-                print(f"Sent bytes for: Dist={dist_int}, Angle={angle_int}")
-                time.sleep(1)
+                angle_int = int(abs(turn_angle) * 10) 
+
+                if 0 <= dist_int <= 65535 and 0 <= angle_int <= 65535:
+                    packed_data = struct.pack('<HH', dist_int, angle_int)
+                    arduino.write(packed_data)
+                    print(f"Sent bytes for: Dist={dist_int}, Angle={angle_int}")
+                    time.sleep(1)
+                else:
+                    print(f"ERROR: Calculated values out of range. Dist: {dist_int}, Angle: {angle_int}")
+
             except (serial.SerialException, OSError) as e:
                 print(f"ERROR: Write failed. ESP32 disconnected? {e}")
                 if arduino:
                     arduino.close()
-                arduino = None # Set to None to trigger reconnection attempt
+                arduino = None
+            except struct.error as e:
+                print(f"CRITICAL ERROR: Struct packing failed. {e}. Values: Dist={dist_int}, Angle={angle_int}")
+
         
         (flag, encodedImage) = cv2.imencode(".jpg", frame_rgb)
         if flag:
@@ -158,14 +151,22 @@ def video_feed():
 
 @app.route('/')
 def index():
-    return """
+    # Use f-string to dynamically set the image size in the HTML
+    w, h = (4608, 2592) # Default if camera not ready
+    if picam2 and 'PixelArraySize' in picam2.camera_properties:
+       w, h = picam2.camera_properties['PixelArraySize']
+    
+    # Scale down for display
+    display_w = 1280
+    display_h = int(display_w * (h/w))
+
+    return f"""
     <html><head><title>WRO Obstacle Detection Stream</title>
-    <style>body{font-family:sans-serif;text-align:center;background-color:#282c34;color:white;}img{border:2px solid #61dafb;margin-top:20px;}</style>
+    <style>body{{font-family:sans-serif;text-align:center;background-color:#282c34;color:white;}}img{{border:2px solid #61dafb;margin-top:20px;}}</style>
     </head><body><h2>WRO Obstacle Detection (LAB)</h2>
-    <img src="/video_feed" width="1280" height="720"></body></html>
+    <img src="/video_feed" width="{display_w}" height="{display_h}"></body></html>
     """
 
 if __name__ == '__main__':
     initialize_camera()
-    # We no longer initialize serial here, the loop will handle it
     app.run(host='0.0.0.0', port=8080, threaded=True)
