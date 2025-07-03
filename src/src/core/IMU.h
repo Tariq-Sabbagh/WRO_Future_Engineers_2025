@@ -10,14 +10,12 @@ class IMU {
 public:
     IMU();
     bool setup();
-    void calibrate();
-    float getHeading();
     void update();
+    float getHeading();
 
 private:
     Adafruit_BNO055 _bno;
-    float _heading_offset;
-    float _current_heading;
+    sensors_event_t _event;
 };
 
 #endif // IMU_H
