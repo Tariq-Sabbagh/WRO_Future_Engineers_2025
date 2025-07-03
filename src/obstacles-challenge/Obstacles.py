@@ -141,7 +141,7 @@ def generate_frames():
             x, y, w, h = cv2.boundingRect(red_contour)
             cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
             distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, h)
-            # travel_dist, _ = calculate_maneuver(frame_rgb.shape, (x, y, w, h), distance)
+            travel_dist, _ = calculate_maneuver(frame_rgb.shape, (x, y, w, h), distance)
             info_text = f"Dist: {distance:.1f}cm"
             cv2.putText(frame_rgb, info_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             
