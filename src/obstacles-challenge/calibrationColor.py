@@ -4,13 +4,41 @@ import numpy as np
 import time
 from picamera2 import Picamera2
 
+
+
+# --- Configuration ---
+CALIBRATION_FILE = "calibration_data.npz"  # Calibration data file
+OPTIMIZED_RESOLUTION = (1920, 1080)  # Better performance than 4K
+
+# --- Load Calibration Data ---
+calibration_data = np.load(CALIBRATION_FILE)
+mtx = calibration_data['mtx']
+dist = calibration_data['dist']
+
+# Scale camera matrix for new resolution
+SCALE_X = OPTIMIZED_RESOLUTION[0] / 4608
+SCALE_Y = OPTIMIZED_RESOLUTION[1] / 2592
+mtx_scaled = mtx.copy()
+mtx_scaled[0, 0] *= SCALE_X  # fx
+mtx_scaled[1, 1] *= SCALE_Y  # fy
+mtx_scaled[0, 2] *= SCALE_X  # cx
+mtx_scaled[1, 2] *= SCALE_Y  # cy
+FOCAL_LENGTH = mtx_scaled[1, 1]  # Use calibrated focal length
+
+# Precompute undistortion maps for performance
+map1, map2 = cv2.initUndistortRectifyMap(
+    mtx_scaled, dist, None, mtx_scaled, 
+    (OPTIMIZED_RESOLUTION[0], OPTIMIZED_RESOLUTION[1]), 
+    cv2.CV_16SC2
+)
 app = Flask(__name__)
 
 # Initialize Pi Camera
 picam2 = Picamera2()
-wedth=int(4608/2)
-high=int(2592/2)
-config = picam2.create_video_configuration(main={"size": (wedth, high)})
+config = picam2.create_preview_configuration(
+        main={"size": OPTIMIZED_RESOLUTION},
+        raw={"size": (2304, 1296)}  # Half-resolution binning
+    )   
 picam2.configure(config)
 picam2.start()
 time.sleep(2)  # Camera warm-up
