@@ -89,18 +89,11 @@ def calculate_maneuver(frame_shape, bounding_rect, distance_cm):
     frame_center_x = frame_shape[1] / 2
     pixel_offset = obj_center_x - frame_center_x
     cm_per_pixel = KNOWN_OBSTACLE_HEIGHT_CM / h
-    offset_x_cm = pixel_offset * cm_per_pixel
-    if distance_cm**2 > offset_x_cm**2:
-        offset_y_cm = np.sqrt(distance_cm**2 - offset_x_cm**2)
-    else:
-        offset_y_cm = 0
-    travel_distance = np.sqrt(offset_y_cm**2 + (offset_x_cm + 15)**2)
-    if offset_y_cm == 0:
-        turn_angle_rad = np.pi / 2 if offset_x_cm > 0 else -np.pi / 2
-    else:
-        turn_angle_rad = np.arctan((offset_x_cm + 15) / offset_y_cm)
-    turn_angle_deg = np.degrees(turn_angle_rad)
-    return travel_distance, turn_angle_deg
+    offset_x_cm = pixel_offset * cm_per_pixel + 15
+    tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
+    angle = np.arctan2(offset_x_cm,distance_cm)
+    turn_angle = angle * 180 / np.arccos(-1)
+    return tendon , turn_angle
 
 # --- Main Generator with Error Handling ---
 def generate_frames():
@@ -114,19 +107,19 @@ def generate_frames():
     lab_red_upper = np.array([134, 255, 108])
 
     while True:
-        # if arduino is None:
-        #     initialize_serial(SERIAL_PORT, BAUDRATE)
-        #     if arduino is None:
-        #         # Create a black frame for the warning message
-        #         # Use the configured resolution
-        #         w, h = picam2.camera_properties['PixelArraySize']
-        #         frame = np.zeros((h, w, 3), dtype=np.uint8)
-        #         cv2.putText(frame, "ESP32 Disconnected", (50, int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
-        #         (flag, encodedImage) = cv2.imencode(".jpg", frame)
-        #         if flag:
-        #             yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
-        #         time.sleep(1)
-        #         continue
+        if arduino is None:
+            initialize_serial(SERIAL_PORT, BAUDRATE)
+            if arduino is None:
+                # Create a black frame for the warning message
+                # Use the configured resolution
+                w, h = picam2.camera_properties['PixelArraySize']
+                frame = np.zeros((h, w, 3), dtype=np.uint8)
+                cv2.putText(frame, "ESP32 Disconnected", (50, int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+                (flag, encodedImage) = cv2.imencode(".jpg", frame)
+                if flag:
+                    yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+                time.sleep(1)
+                continue
         
         frame = picam2.capture_array()
         frame = cv2.flip(frame, -1)
@@ -138,32 +131,27 @@ def generate_frames():
         red_contour = find_largest_contour(red_mask)
         
         if red_contour is not None:
-            x, y, w, h = cv2.boundingRect(red_contour)
-            cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, h)
-            travel_dist, _ = calculate_maneuver(frame_rgb.shape, (x, y, w, h), distance)
-            info_text = f"Dist: {distance:.1f}cm"
-            cv2.putText(frame_rgb, info_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            X_contour, Y_contour, W_contour, H_contour = cv2.boundingRect(red_contour)
+            cv2.rectangle(frame_rgb, (X_contour, Y_contour), (X_contour + W_contour, Y_contour + H_contour), (0, 255, 0), 2)
+            distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, H_contour)
+            travel_dist, turn_angle = calculate_maneuver(frame_rgb.shape, (X_contour, Y_contour, W_contour, H_contour), distance)
+            # print(f"x: {X_contour:.1f}")
+            # print(f"W: {W_contour:.1f}")
+            info_text = f"Dist: {travel_dist:.1f}cm , Angle: {turn_angle:.1f}deg"
+            cv2.putText(frame_rgb, info_text, (X_contour, Y_contour - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            # print("travel_dist" + travel_dist + " turn_angle")
             
-            # try:
-            #     dist_int = int(travel_dist * 10)
-            #     angle_int = int(abs(turn_angle) * 10) 
+            try:
+                
+                arduino.write()
 
-            #     if 0 <= dist_int <= 65535 and 0 <= angle_int <= 65535:
-            #         packed_data = struct.pack('<HH', dist_int, angle_int)
-            #         # arduino.write(packed_data)
-            #         print(f"Sent bytes for: Dist={dist_int}, Angle={angle_int}")
-            #         time.sleep(1)
-            #     else:
-            #         print(f"ERROR: Calculated values out of range. Dist: {dist_int}, Angle: {angle_int}")
-
-            # except (serial.SerialException, OSError) as e:
-            #     print(f"ERROR: Write failed. ESP32 disconnected? {e}")
-            #     if arduino:
-            #         arduino.close()
-            #     arduino = None
-            # except struct.error as e:
-            #     print(f"CRITICAL ERROR: Struct packing failed. {e}. Values: Dist={dist_int}, Angle={angle_int}")
+            except (serial.SerialException, OSError) as e:
+                print(f"ERROR: Write failed. ESP32 disconnected? {e}")
+                if arduino:
+                    arduino.close()
+                arduino = None
+            except struct.error as e:
+                print(f"CRITICAL ERROR: Struct packing failed. {e}. Values: Dist={dist_int}, Angle={angle_int}")
 
         
         (flag, encodedImage) = cv2.imencode(".jpg", frame_rgb)
