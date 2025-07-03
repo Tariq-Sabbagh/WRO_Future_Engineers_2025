@@ -1,7 +1,4 @@
-#ifndef CAR_H
-#define CAR_H
-
-#include "config.h"
+#include "PIDController.h"
 #include "MotorController.h"
 #include "Steering.h"
 #include "DistanceSensors.h"
@@ -9,30 +6,32 @@
 #include "Button.h"
 
 class Car {
-public:
-    Car();
-    void setup();
-    void loop();
-
 private:
-    // Car Components
     MotorController _motors;
     Steering _steering;
     DistanceSensors _distSensors;
     IMU _imu;
     Button _button;
-
-    // State variables from original script
+    PIDController _pid;  // PID controller for steering
+    
+    // Navigation state
     float _offsetGyro;
     int _turnCounter;
     unsigned long _previousTurnMillis;
+    String direction;
+    float error;
+    float angle;
 
-    // Private Methods that mirror original functions
-    void _moveStraight();
+
+    // Internal methods
     void _checkForTurns();
+    void _moveStraight();
     void _turnRight();
     void _turnLeft();
     void _stopAndHalt();
-};
 
-#endif // CAR_H
+public:
+    Car();
+    void setup();
+    void loop();
+};

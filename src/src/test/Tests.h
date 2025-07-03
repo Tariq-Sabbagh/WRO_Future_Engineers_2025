@@ -7,10 +7,13 @@
 #include "core/IMU.h"
 #include <Wire.h> 
 #include "Adafruit_VL53L0X.h"
+#include "core/Timer.h"
+#include "core/PIDController.h"
+
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
-
+Servo servo;
 // Instantiate objects specifically for testing
 MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
 Steering testSteering(SERVO_PIN);
@@ -68,7 +71,7 @@ void test_wire()
   byte error, address;
   int nDevices = 0;
 
-  delay(5000);
+  delay(1000);
 
   Serial.println("Scanning for I2C devices ...");
   for (address = 0x01; address < 0x7f; address++) {
@@ -155,7 +158,7 @@ void test_imu() {
     
     Serial.println("Calibrating IMU... Keep it flat and still.");
     wait(1000, "Sensor Settling");
-    testImu.calibrate();
+    testImu.getHeading();
     
     Serial.println("Rotate the car. Heading should change relative to start.");
     Serial.println("Time\tHeading");
@@ -172,21 +175,40 @@ void test_imu() {
     Serial.println("IMU test complete.");
 }
 
+void test_pid_controller(){
 
+  PIDController pid;
+  pid.setup(0.9,0,0);
+  pid.setOutputLimits(-45,45);
+  unsigned long startTime = millis();
+    while(millis() - startTime < 10000) {
+      float correction = pid.compute(0,50);
+      Serial.println(correction);
+      correction = pid.compute(0,0);
+      Serial.println(correction);
+      correction = pid.compute(0,-50);
+      Serial.println(correction);
+    }
+
+}
 void runHardwareTests() {
-    Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
+    
+  Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
     
     // test_motors();
-    test_steering();
-    test_distance_sensors();
-    // test_imu();
-    // test_wire();
+
+    // test_steering();
+    // test_distance_sensors();
+    test_wire();
+    test_imu();
     // test_TOF();
     
-    // Serial.println("\n===== ALL TESTS COMPLETE =====");
-    // Serial.println("Reset device to run again.");
-    // while(true) {
-    //   // Loop forever
-    // }
+    Serial.println("\n===== ALL TESTS COMPLETE =====");
+    Serial.println("Reset device to run again.");
+    while(true) {
+      // Loop forever
+    }
 }
+
+
 
