@@ -1,25 +1,26 @@
 #include "SerialCommunicator.h"
+#include <Arduino.h>
 
 SerialCommunicator::SerialCommunicator() {}
 
-/**
- * @brief Checks for and decodes a new maneuver command from the serial port.
- * @param distance Reference to a float to store the decoded distance.
- * @param angle Reference to a float to store the decoded angle.
- * @return true if a new, valid command was received and decoded.
- */
 bool SerialCommunicator::getManeuverCommand(float &distance, float &angle) {
-    // Check if a full packet of bytes is available to be read.
     if (Serial.available() >= PACKET_SIZE) {
-        // Read the bytes directly into the struct. This is fast and efficient.
-        Serial.readBytes((char*)&_data, PACKET_SIZE);
-
-        // Decode the integer values back into floats.
-        // We divide by 10.0 to restore the decimal point.
-        distance = (float)_data.distance_cm_x10 / 10.0f;
-        angle = (float)_data.angle_deg_x10 / 10.0f;
+        uint8_t buffer[4];
+        Serial.readBytes(buffer, PACKET_SIZE);
         
-        return true; // A new command was processed.
+        // Manual unpacking in little-endian format
+        int16_t dist_int = buffer[0] | (buffer[1] << 8);
+        int16_t angle_int = buffer[2] | (buffer[3] << 8);
+        
+        // Debug print raw integers
+        Serial.print("Raw integers: ");
+        Serial.print(dist_int);
+        Serial.print(", ");
+        Serial.println(angle_int);
+        
+        distance = dist_int / 10.0f;
+        angle = angle_int / 10.0f;
+        return true;
     }
-    return false; // No new command.
+    return false;
 }

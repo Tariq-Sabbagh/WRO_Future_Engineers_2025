@@ -9,6 +9,8 @@
 #include "Encoder.h"
 #include "SerialCommunicator.h" // Include the new communicator
 #include "Button.h"
+#include <Wire.h>
+#include "core/Timer.h"
 
 class ObstacleAvoider {
 public:
@@ -25,6 +27,7 @@ private:
     Encoder _encoder;
     SerialCommunicator _comm; // The new communicator object
     Button _button;
+    Timer timer;
 
 
     // State Machine

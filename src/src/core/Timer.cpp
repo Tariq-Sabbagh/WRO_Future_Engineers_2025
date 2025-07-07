@@ -42,19 +42,9 @@ void Timer::reset() {
     _duration = 0;
 }
 
-bool Timer::wait(unsigned long duration) {
+void Timer::wait(unsigned long duration) {
     static Timer waitTimer;
-    static bool waiting = false;
-
-    if (!waiting) {
-        waitTimer.start(duration);
-        waiting = true;
-    }
-
-    if (waitTimer.isFinished()) {
-        waiting = false;
-        return true;
-    }
-
-    return false;
+    waitTimer.start(duration);
+        while (!timer.isFinished())
+            ;
 }

@@ -62,7 +62,10 @@ def initialize_serial(port, baudrate):
     try:
         arduino = serial.Serial(port=port, baudrate=baudrate, timeout=0.1)
         print(f"Serial connection established on {port}.")
-    except serial.SerialException:
+        arduino.write(b'TEST')
+        arduino.flush() 
+    except serial.SerialException as e:
+        print(f"Serial error: {str(e)}")
         arduino = None
 
 def detect_color_in_lab(lab_frame, lower_bound, upper_bound):
@@ -95,6 +98,14 @@ def calculate_maneuver(frame_shape, bounding_rect, distance_cm):
     turn_angle = angle * 180 / np.arccos(-1)
     return tendon , turn_angle
 
+def encode_maneuver(tendon, turn_angle):
+    # Scale floats to integers (multiply by 10 for 1 decimal place)
+    distance_int = int(round(tendon * 10))
+    angle_int = int(round(turn_angle * 10))
+
+    print(f"Raw integers: {distance_int}, {angle_int}")
+    # Pack into 4 bytes (2 little-endian int16_t values)
+    return struct.pack('<hh', distance_int, angle_int)
 # --- Main Generator with Error Handling ---
 def generate_frames():
     """Processes frames and handles serial communication errors gracefully."""
@@ -139,19 +150,22 @@ def generate_frames():
             # print(f"W: {W_contour:.1f}")
             info_text = f"Dist: {travel_dist:.1f}cm , Angle: {turn_angle:.1f}deg"
             cv2.putText(frame_rgb, info_text, (X_contour, Y_contour - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            # print("travel_dist" + travel_dist + " turn_angle")
-            
-            try:
-                
-                arduino.write()
+            print(f"Sending: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
+            packet = encode_maneuver(travel_dist, turn_angle)
+            print(f"Packet bytes: {packet.hex()}")
 
+            try:
+                arduino.write(packet)
+                arduino.flush()  # Ensure data is sent immediately
             except (serial.SerialException, OSError) as e:
                 print(f"ERROR: Write failed. ESP32 disconnected? {e}")
                 if arduino:
                     arduino.close()
                 arduino = None
             except struct.error as e:
-                print(f"CRITICAL ERROR: Struct packing failed. {e}. Values: Dist={dist_int}, Angle={angle_int}")
+                print(f"CRITICAL ERROR: Struct packing failed. {e}")
+            
+            time.sleep(0.01)
 
         
         (flag, encodedImage) = cv2.imencode(".jpg", frame_rgb)
