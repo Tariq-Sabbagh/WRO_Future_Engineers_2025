@@ -1,5 +1,5 @@
 #include <Arduino.h>
-
+#include "core/Timer.h"
 #pragma once
 
 
@@ -7,6 +7,7 @@
 class SerialCommunicator {
 public:
     SerialCommunicator();
+    Timer timer;
     bool getManeuverCommand(float &distance, float &angle);
 
 private:

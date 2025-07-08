@@ -45,6 +45,7 @@ void Timer::reset() {
 void Timer::wait(unsigned long duration) {
     static Timer waitTimer;
     waitTimer.start(duration);
-        while (!timer.isFinished())
+        while (!waitTimer.isFinished())
             ;
+
 }

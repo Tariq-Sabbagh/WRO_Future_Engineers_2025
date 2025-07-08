@@ -10,7 +10,7 @@
 #include "SerialCommunicator.h" // Include the new communicator
 #include "Button.h"
 #include <Wire.h>
-#include "core/Timer.h"
+#include "Timer.h"
 
 class ObstacleAvoider {
 public:
@@ -28,16 +28,17 @@ private:
     SerialCommunicator _comm; // The new communicator object
     Button _button;
     Timer timer;
+    bool reset;
 
 
     // State Machine
-    enum State { IDLE, AVOIDING };
+    enum State { IDLE, AVOIDING , FORWARD , STOP};
     State _currentState;
 
     // Methods
-    void _executeManeuver(float distance, float angle);
-    void _turn(float targetAngle);
-    void _driveDistance(float targetDistance);
+    void _execute();
+    void _goforward();
+    void _avoidObs();
     void _stopAndHalt();
 };
 

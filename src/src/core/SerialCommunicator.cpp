@@ -4,6 +4,8 @@
 SerialCommunicator::SerialCommunicator() {}
 
 bool SerialCommunicator::getManeuverCommand(float &distance, float &angle) {
+    // Serial.flush();
+    timer.wait(500);
     if (Serial.available() >= PACKET_SIZE) {
         uint8_t buffer[4];
         Serial.readBytes(buffer, PACKET_SIZE);

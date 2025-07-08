@@ -41,6 +41,9 @@ app = Flask(__name__)
 # --- Global Variables for Camera and Serial ---
 picam2 = None
 arduino = None # Start with no connection
+LAST_COMMAND_SENT = None
+COMMAND_TIMEOUT = 2.0  # Seconds to wait before sending new command
+LAST_COMMAND_TIME = time.time()
 
 # --- Function Definitions (Unchanged) ---
 def initialize_camera():
@@ -109,7 +112,7 @@ def encode_maneuver(tendon, turn_angle):
 # --- Main Generator with Error Handling ---
 def generate_frames():
     """Processes frames and handles serial communication errors gracefully."""
-    global arduino, picam2
+    global arduino, picam2,LAST_COMMAND_SENT, LAST_COMMAND_TIME
     
     lab_green_lower = np.array([69, 0, 150])
     lab_green_upper = np.array([255, 114, 255])
@@ -131,7 +134,7 @@ def generate_frames():
                     yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
                 time.sleep(1)
                 continue
-        
+        current_time = time.time()
         frame = picam2.capture_array()
         frame = cv2.flip(frame, -1)
         
@@ -150,13 +153,14 @@ def generate_frames():
             # print(f"W: {W_contour:.1f}")
             info_text = f"Dist: {travel_dist:.1f}cm , Angle: {turn_angle:.1f}deg"
             cv2.putText(frame_rgb, info_text, (X_contour, Y_contour - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            print(f"Sending: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
+            # print(f"Sending: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
             packet = encode_maneuver(travel_dist, turn_angle)
-            print(f"Packet bytes: {packet.hex()}")
+            
 
             try:
                 arduino.write(packet)
-                arduino.flush()  # Ensure data is sent immediately
+                arduino.read()
+                print(f"Packet bytes: {packet.hex()}")
             except (serial.SerialException, OSError) as e:
                 print(f"ERROR: Write failed. ESP32 disconnected? {e}")
                 if arduino:
@@ -165,7 +169,7 @@ def generate_frames():
             except struct.error as e:
                 print(f"CRITICAL ERROR: Struct packing failed. {e}")
             
-            time.sleep(0.01)
+        time.sleep(0.5)
 
         
         (flag, encodedImage) = cv2.imencode(".jpg", frame_rgb)
