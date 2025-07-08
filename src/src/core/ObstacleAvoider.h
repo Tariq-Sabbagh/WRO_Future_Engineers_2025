@@ -27,19 +27,20 @@ private:
     Encoder _encoder;
     SerialCommunicator _comm; // The new communicator object
     Button _button;
-    Timer timer;
+    Timer _timer;
     bool reset;
 
 
     // State Machine
-    enum State { IDLE, AVOIDING , FORWARD , STOP};
+    enum State { AVOIDING , FORWARD , IDLE};
     State _currentState;
 
     // Methods
-    void _execute();
+    void _goForward();
     void _goforward();
-    void _avoidObs();
+    void _avoidObstacle();
     void _stopAndHalt();
+    void _stopUntilTimer();
 };
 
 #endif // OBSTACLE_AVOIDER_H
