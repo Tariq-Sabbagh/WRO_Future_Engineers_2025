@@ -4,224 +4,327 @@ import cv2
 import numpy as np
 import struct
 from picamera2 import Picamera2
-from flask import Flask, Response
 
-
-# --- Configuration ---
-KNOWN_OBSTACLE_HEIGHT_CM = 10.0
-SERIAL_PORT = '/dev/ttyUSB0' 
-BAUDRATE = 115200
-CALIBRATION_FILE = "calibration_data.npz"  # Calibration data file
-OPTIMIZED_RESOLUTION = (1280, 720)  # Better performance
-
-lab_green_lower = np.array([0, 0, 151])
-lab_green_upper = np.array([115, 110, 255])
-
-lab_red_lower = np.array([0, 135, 0])
-lab_red_upper = np.array([134, 255, 108])
-
-# --- Load Calibration Data ---
-calibration_data = np.load(CALIBRATION_FILE)
-mtx = calibration_data['mtx']
-dist = calibration_data['dist']
-
-# Scale camera matrix for new resolution
-SCALE_X = OPTIMIZED_RESOLUTION[0] / 4608
-SCALE_Y = OPTIMIZED_RESOLUTION[1] / 2592
-mtx_scaled = mtx.copy()
-mtx_scaled[0, 0] *= SCALE_X  # fx
-mtx_scaled[1, 1] *= SCALE_Y  # fy
-mtx_scaled[0, 2] *= SCALE_X  # cx
-mtx_scaled[1, 2] *= SCALE_Y  # cy
-FOCAL_LENGTH = 570.0  # Use calibrated focal length
-
-# Precompute undistortion maps for performance
-map1, map2 = cv2.initUndistortRectifyMap(
-    mtx_scaled, dist, None, mtx_scaled, 
-    (OPTIMIZED_RESOLUTION[0], OPTIMIZED_RESOLUTION[1]), 
-    cv2.CV_16SC2
-)
-# --- Flask App Initialization ---
-app = Flask(__name__)
-
-# --- Global Variables for Camera and Serial ---
-picam2 = None
-arduino = None # Start with no connection
-LAST_COMMAND_SENT = None
-COMMAND_TIMEOUT = 2.0  # Seconds to wait before sending new command
-LAST_COMMAND_TIME = time.time()
-
-# --- Function Definitions (Unchanged) ---
-def initialize_camera():
-    global picam2
-    picam2 = Picamera2()
-    # --- CHANGE: Updated to user-specified resolution ---
-    # WARNING: High resolution can cause significant performance issues.
-    # Consider (1920, 1080) or (1280, 720) for better real-time performance.
-    config = picam2.create_preview_configuration(
-        main={"size": OPTIMIZED_RESOLUTION},
-        raw={"size": (2304, 1296)}  # Half-resolution binning
-    )
-    picam2.configure(config)
-    picam2.start()
-    print("Camera initialized.")
-
-def initialize_serial(port, baudrate):
-    global arduino
-    try:
-        arduino = serial.Serial(port=port, baudrate=baudrate, timeout=0.1)
-        print(f"Serial connection established on {port}.")
-        arduino.write(b'TEST')
-        arduino.flush() 
-    except serial.SerialException as e:
-        print(f"Serial error: {str(e)}")
-        arduino = None
-
-def detect_color_in_lab(lab_frame, lower_bound, upper_bound):
-    mask = cv2.inRange(lab_frame, lower_bound, upper_bound)
-    kernel = np.ones((5, 5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    return mask
-
-def find_largest_contour(mask, min_area=200):
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours: return None
-    largest_contour = max(contours, key=cv2.contourArea)
-    if cv2.contourArea(largest_contour) > min_area: return largest_contour
-    return None
-
-def calculate_distance(focal_length, real_height, pixel_height):
-    if pixel_height == 0: return 0
-    return (real_height * focal_length) / pixel_height
-
-def calculate_maneuver(frame_shape, bounding_rect, distance_cm):
-    x, y, w, h = bounding_rect
-    obj_center_x = x + w / 2
-    frame_center_x = frame_shape[1] / 2
-    pixel_offset = obj_center_x - frame_center_x
-    cm_per_pixel = KNOWN_OBSTACLE_HEIGHT_CM / h
-    offset_x_cm = pixel_offset * cm_per_pixel + 15
-    tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
-    angle = np.arctan2(offset_x_cm,distance_cm)
-    turn_angle = angle * 180 / np.arccos(-1)
-    return tendon , turn_angle
-
-def calculate_maneuver_green(frame_shape, bounding_rect, distance_cm):
-    x, y, w, h = bounding_rect
-    obj_center_x = x + w / 2
-    frame_center_x = frame_shape[1] / 2
-    pixel_offset = obj_center_x - frame_center_x
-    cm_per_pixel = KNOWN_OBSTACLE_HEIGHT_CM / h
-    offset_x_cm = pixel_offset * cm_per_pixel - 15
-    tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
-    angle = np.arctan2(offset_x_cm,distance_cm)
-    turn_angle = angle * 180 / np.arccos(-1)
-    return tendon , turn_angle
-
-def encode_maneuver(tendon, turn_angle):
-    # Scale floats to integers (multiply by 10 for 1 decimal place)
-    distance_int = int(round(tendon * 10))
-    angle_int = int(round(turn_angle * 10))
-
-    # Pack into 4 bytes (2 little-endian int16_t values)
-    return struct.pack('<hh', distance_int, angle_int)
-# --- Main Generator with Error Handling ---
-def generate_frames():
-    while True:
-        frame_rgb = process()
-        (flag, encodedImage) = cv2.imencode(".jpg", frame_rgb)
-        if flag:
-            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
-        time.sleep(0.1)
-
-def process():
-    global arduino
-    if arduino is None:
-        initialize_serial(SERIAL_PORT, BAUDRATE)
-    frame = picam2.capture_array()
-    frame = cv2.flip(frame, -1)
+class ObstacleDetector:
+    def __init__(self, debug_mode=False):
+        # Configuration
+        self.SERIAL_PORT = '/dev/ttyUSB0'
+        self.BAUDRATE = 115200
+        self.CALIBRATION_FILE = "calibration_data.npz"
+        self.OPTIMIZED_RESOLUTION = (1280, 720)
+        self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
+        self.FOCAL_LENGTH = 570.0
+        self.MAX_DISTANCE_CM = 90.0
+        self.debug_mode = debug_mode  # True = debugging, False = production
+        
+        # Color profiles
+        self.COLOR_PROFILES = {
+            'red': {
+                'lower': np.array([0, 135, 0]),
+                'upper': np.array([134, 255, 108]),
+                'offset_adjust': 15
+            },
+            'green': {
+                'lower': np.array([0, 0, 151]),
+                'upper': np.array([115, 110, 255]),
+                'offset_adjust': -15
+            }
+        }
+        
+        # State variables
+        self.picam2 = None
+        self.arduino = None
+        
+        # Initialize hardware and calibration
+        self.initialize_camera()
+        self.load_calibration()
+        
+        # Only initialize serial in production mode
+        if not self.debug_mode:
+            self.initialize_serial()
     
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
+    def load_calibration(self):
+        """Load and scale camera calibration data"""
+        calibration_data = np.load(self.CALIBRATION_FILE)
+        mtx = calibration_data['mtx']
+        dist = calibration_data['dist']
+        
+        # Scale camera matrix
+        SCALE_X = self.OPTIMIZED_RESOLUTION[0] / 4608
+        SCALE_Y = self.OPTIMIZED_RESOLUTION[1] / 2592
+        self.mtx_scaled = mtx.copy()
+        self.mtx_scaled[0, 0] *= SCALE_X
+        self.mtx_scaled[1, 1] *= SCALE_Y
+        self.mtx_scaled[0, 2] *= SCALE_X
+        self.mtx_scaled[1, 2] *= SCALE_Y
+        
+        # Precompute undistortion maps
+        self.map1, self.map2 = cv2.initUndistortRectifyMap(
+            self.mtx_scaled, dist, None, self.mtx_scaled, 
+            self.OPTIMIZED_RESOLUTION, 
+            cv2.CV_16SC2
+        )
     
-    green_mask = detect_color_in_lab(frame_lab,lab_green_lower,lab_green_upper)
-    green_contour = find_largest_contour (green_mask)
+    def initialize_camera(self):
+        """Set up the camera hardware"""
+        self.picam2 = Picamera2()
+        config = self.picam2.create_preview_configuration(
+            main={"size": self.OPTIMIZED_RESOLUTION},
+            raw={"size": (2304, 1296)}
+        )
+        self.picam2.configure(config)
+        self.picam2.start()
+        print("Camera initialized.")
     
-    red_mask = detect_color_in_lab(frame_lab, lab_red_lower, lab_red_upper)
-    red_contour = find_largest_contour(red_mask)
+    def initialize_serial(self):
+        """Set up serial communication with Arduino (production only)"""
+        try:
+            self.arduino = serial.Serial(
+                port=self.SERIAL_PORT, 
+                baudrate=self.BAUDRATE, 
+                timeout=0.1
+            )
+            print(f"Serial connection established on {self.SERIAL_PORT}.")
+            self.arduino.write(b'TEST')
+            self.arduino.flush()
+        except serial.SerialException as e:
+            print(f"Serial error: {str(e)}")
+            self.arduino = None
     
-    if red_contour is not None and (green_contour is None or
-                                    cv2.contourArea(green_contour)< cv2.contourArea(red_contour)):
-        X_contour, Y_contour, W_contour, H_contour = cv2.boundingRect(red_contour)
-        distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, H_contour)
-        travel_dist, turn_angle = calculate_maneuver(frame_rgb.shape, (X_contour, Y_contour, W_contour, H_contour), distance)
-        tendon = travel_dist - 15 
-        if tendon >= 65:
-            return frame_rgb
-        # print(f"x: {X_contour:.1f}")
-        # print(f"W: {W_contour:.1f}")
-        info_text = f"Dist: {travel_dist:.1f}cm , Angle: {turn_angle:.1f}deg"
-        cv2.rectangle(frame_rgb, (X_contour, Y_contour), (X_contour + W_contour, Y_contour + H_contour), (0, 255, 0), 2)
-        cv2.putText(frame_rgb, info_text, (X_contour, Y_contour - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        print(f"Sending: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
-    elif(green_contour is not None and (red_contour is None or
-                                    cv2.contourArea(green_contour) > cv2.contourArea(red_contour))):
-        X_contour, Y_contour, W_contour, H_contour = cv2.boundingRect(green_contour)
-        distance = calculate_distance(FOCAL_LENGTH, KNOWN_OBSTACLE_HEIGHT_CM, H_contour)
-        travel_dist, turn_angle = calculate_maneuver_green(frame_rgb.shape, (X_contour, Y_contour, W_contour, H_contour), distance)
-        tendon = travel_dist - 15 
-        if tendon >= 65:
-            return frame_rgb
-        # print(f"x: {X_contour:.1f}")
-        # print(f"W: {W_contour:.1f}")
-        info_text = f"Dist: {travel_dist:.1f}cm , Angle: {turn_angle:.1f}deg"
-        cv2.rectangle(frame_rgb, (X_contour, Y_contour), (X_contour + W_contour, Y_contour + H_contour), (0, 255, 0), 2)
-        cv2.putText(frame_rgb, info_text, (X_contour, Y_contour - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        print(f"Sending: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
-    else: return frame_rgb
+    def detect_color(self, lab_frame, color_name):
+        """Detect specific color in LAB space"""
+        profile = self.COLOR_PROFILES[color_name]
+        mask = cv2.inRange(lab_frame, profile['lower'], profile['upper'])
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        return mask
     
-    send_values(travel_dist,turn_angle)
-    return frame_rgb
+    def find_largest_contour(self, mask, min_area=300):
+        """Find largest contour in mask"""
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours: 
+            return None
+            
+        largest_contour = max(contours, key=cv2.contourArea)
+        return largest_contour if cv2.contourArea(largest_contour) > min_area else None
     
-
-def send_values(travel_dist, turn_angle):
-    packet = encode_maneuver(travel_dist, turn_angle)
-
-    try:
-        arduino.write(packet)
-    except (serial.SerialException, OSError) as e:
-        print(f"ERROR: Write failed. ESP32 disconnected? {e}")
-        if arduino:
-            arduino.close()
-        arduino = None
-    except struct.error as e:
-        print(f"CRITICAL ERROR: Struct packing failed. {e}")
-
-# --- Flask Routes (Unchanged) ---
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/')
-def index():
-    # Use f-string to dynamically set the image size in the HTML
-    w, h = (4608, 2592) # Default if camera not ready
-    if picam2 and 'PixelArraySize' in picam2.camera_properties:
-       w, h = picam2.camera_properties['PixelArraySize']
+    def calculate_distance(self, pixel_height):
+        """Calculate distance to object"""
+        return (self.KNOWN_OBSTACLE_HEIGHT_CM * self.FOCAL_LENGTH) / pixel_height if pixel_height else 0
     
-    # Scale down for display
-    display_w = 1280
-    display_h = int(display_w * (h/w))
+    def calculate_maneuver(self, frame_shape, bounding_rect, distance_cm, offset_adjust=15):
+        """Calculate movement parameters"""
+        x, y, w, h = bounding_rect
+        obj_center_x = x + w / 2
+        frame_center_x = frame_shape[1] / 2
+        
+        pixel_offset = obj_center_x - frame_center_x
+        cm_per_pixel = self.KNOWN_OBSTACLE_HEIGHT_CM / h
+        offset_x_cm = (pixel_offset * cm_per_pixel) + offset_adjust
+        
+        tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
+        angle = np.arctan2(offset_x_cm, distance_cm)
+        turn_angle = np.degrees(angle)
+        
+        return tendon, turn_angle
+    
+    def process_obstacle(self, contour, frame_rgb, color_type):
+        """Process detected obstacle and optionally send commands"""
+        profile = self.COLOR_PROFILES[color_type]
+        x, y, w, h = cv2.boundingRect(contour)
+        distance = self.calculate_distance(h)
+        travel_dist, turn_angle = self.calculate_maneuver(
+            frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
+        )
+        
+        # Skip if too far
+        if travel_dist >= self.MAX_DISTANCE_CM:
+            return False
+        
+        # Annotate frame for visualization
+        info_text = f"{color_type.upper()}: {travel_dist:.1f}cm, {turn_angle:.1f}deg"
+        cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(frame_rgb, info_text, (x, y - 10), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        
+        # Only send commands in production mode
+        if not self.debug_mode:
+            self.send_values(travel_dist, turn_angle)
+        
+        print(f"{color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
+        return True
+    
+    def send_values(self, travel_dist, turn_angle):
+        """Send maneuver values to Arduino (production only)"""
+        if self.arduino is None:
+            return
+            
+        # Encode values
+        distance_int = int(round(travel_dist * 10))
+        angle_int = int(round(turn_angle * 10))
+        packet = struct.pack('<hh', distance_int, angle_int)
+    
+        try:
+            self.arduino.write(packet)
+        except (serial.SerialException, OSError) as e:
+            print(f"ERROR: Write failed. {e}")
+            if self.arduino:
+                self.arduino.close()
+            self.arduino = None
+    
+    def capture_frame(self):
+        """Capture and prepare a frame from camera"""
+        frame = self.picam2.capture_array()
+        frame = cv2.flip(frame, -1)
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    def detect_obstacles(self, frame_rgb):
+        """Detect obstacles in a frame"""
+        frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
+        
+        # Detect both colors
+        contours = {}
+        for color in self.COLOR_PROFILES:
+            mask = self.detect_color(frame_lab, color)
+            contours[color] = self.find_largest_contour(mask)
+        
+        return contours
+    
+    def find_dominant_obstacle(self, contours):
+        """Determine which obstacle is most prominent"""
+        dominant_color = None
+        max_area = 0
+        
+        for color, contour in contours.items():
+            if contour is not None:
+                area = cv2.contourArea(contour)
+                if area > max_area:
+                    max_area = area
+                    dominant_color = color
+        
+        return dominant_color
+    
+    def process_frame(self):
+        """Process a single frame"""
+        frame_rgb = self.capture_frame()
+        contours = self.detect_obstacles(frame_rgb)
+        dominant_color = self.find_dominant_obstacle(contours)
+        
+        if dominant_color:
+            self.process_obstacle(
+                contours[dominant_color], 
+                frame_rgb, 
+                dominant_color
+            )
+        
+        return frame_rgb
 
-    return f"""
-    <html><head><title>WRO Obstacle Detection Stream</title>
-    <style>body{{font-family:sans-serif;text-align:center;background-color:#282c34;color:white;}}img{{border:2px solid #61dafb;margin-top:20px;}}</style>
-    </head><body><h2>WRO Obstacle Detection (LAB)</h2>
-    <img src="/video_feed" width="{display_w}" height="{display_h}"></body></html>
-    """
+    def run_processing_loop(self):
+        """Main processing loop for production"""
+        print("Starting obstacle detection in PRODUCTION mode...")
+        try:
+            while True:
+                # Process frame without visualization
+                self.process_frame()
+                time.sleep(0.08)
+        except KeyboardInterrupt:
+            print("\nStopping detection...")
+        finally:
+            if self.picam2:
+                self.picam2.stop()
+            if self.arduino:
+                self.arduino.close()
 
 
+# =================================================================
+# Web Application (Debugging Only)
+# =================================================================
+def create_flask_app(detector):
+    from flask import Flask, Response
+    
+    app = Flask(__name__)
+    
+    def generate_frames():
+        """Video streaming generator for debugging"""
+        while True:
+            frame = detector.process_frame()
+            success, encoded_frame = cv2.imencode(".jpg", frame)
+            if success:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + 
+                       bytearray(encoded_frame) + b'\r\n')
+            time.sleep(0.1)
+    
+    @app.route('/video_feed')
+    def video_feed():
+        return Response(generate_frames(), 
+                       mimetype='multipart/x-mixed-replace; boundary=frame')
+    
+    @app.route('/')
+    def index():
+        # Determine display size
+        width, height = (4608, 2592)
+        if detector.picam2 and 'PixelArraySize' in detector.picam2.camera_properties:
+            width, height = detector.picam2.camera_properties['PixelArraySize']
+        
+        display_width = 1280
+        display_height = int(display_width * (height/width))
+    
+        return f"""
+        <html>
+        <head>
+            <title>WRO Obstacle Detection Stream</title>
+            <style>
+                body {{
+                    font-family: sans-serif;
+                    text-align: center;
+                    background-color: #282c34;
+                    color: white;
+                }}
+                img {{
+                    border: 2px solid #61dafb;
+                    margin-top: 20px;
+                }}
+                .warning {{
+                    color: #ff6b6b;
+                    font-weight: bold;
+                    margin: 20px;
+                    padding: 10px;
+                    border: 1px solid #ff6b6b;
+                    border-radius: 5px;
+                }}
+            </style>
+        </head>
+        <body>
+            <h2>WRO Obstacle Detection (DEBUG MODE)</h2>
+            <div class="warning">⚠️ DEBUG MODE: No commands being sent to Arduino ⚠️</div>
+            <img src="/video_feed" width="{display_width}" height="{display_height}">
+        </body>
+        </html>
+        """
+    
+    return app
+
+
+# =================================================================
+# Main Execution
+# =================================================================
 if __name__ == '__main__':
-    initialize_camera()
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Obstacle Detection System')
+    parser.add_argument('--web', action='store_true', 
+                        help='Enable web interface (debugging only)')
+    args = parser.parse_args()
+    
+    # Create detector in appropriate mode
+    detector = ObstacleDetector(debug_mode=args.web)
+    
+    if args.web:
+        print("Starting web server in DEBUG MODE...")
+        app = create_flask_app(detector)
+        app.run(host='0.0.0.0', port=8080, threaded=True)
+    else:
+        print("Running in PRODUCTION MODE: Commands will be sent to Arduino")
+        detector.run_processing_loop()
