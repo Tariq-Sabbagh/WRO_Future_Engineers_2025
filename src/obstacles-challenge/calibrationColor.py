@@ -104,6 +104,8 @@ def video_feed():
 
             _, buffer = cv2.imencode('.jpg', result)
             frame_bytes = buffer.tobytes()
+            
+            time.sleep(0.1)
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
