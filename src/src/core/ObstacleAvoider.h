@@ -11,6 +11,7 @@
 #include "Button.h"
 #include <Wire.h>
 #include "Timer.h"
+#include "DistanceSensors.h"
 
 class ObstacleAvoider {
 public:
@@ -28,11 +29,12 @@ private:
     SerialCommunicator _comm; // The new communicator object
     Button _button;
     Timer _timer;
+    DistanceSensors _ultra;
     bool reset;
 
 
     // State Machine
-    enum State { AVOIDING , FORWARD , IDLE};
+    enum State { AVOIDING , FORWARD , IDLE ,TURN};
     State _currentState;
 
     // Methods
@@ -41,6 +43,7 @@ private:
     void _avoidObstacle();
     void _stopAndHalt();
     void _stopUntilTimer();
+    void _turn();
 };
 
 #endif // OBSTACLE_AVOIDER_H

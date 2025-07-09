@@ -7,11 +7,12 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _encoder(),
                                      _button(BUTTON_PIN),
                                      _timer(),
+                                     _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
                                      _comm() // Initialize the communicator
 {
     _currentState = FORWARD;
 }
-float distance, angle;
+float distance, angle,distance_turn;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
@@ -52,9 +53,30 @@ void ObstacleAvoider::loop()
     case FORWARD:
         _goForward();
         break;
+
+    case TURN:
+        _turn();
+        break;
     }
     
-    
+
+}
+void ObstacleAvoider::_turn()
+{
+    if(_ultra.getFrontCm()<=30)
+    {
+        _timer.start(1000);
+        float correction_turn = _pid.compute(90, _imu.getHeading());
+        _steering.setAngle(-correction_turn);
+        _motors.backward(FORWARD_SPEED - 30);
+        _timer.isFinished();
+        _currentState = FORWARD;
+    }
+
+   
+    float correction = _pid.compute(0, _imu.getHeading());
+    _steering.setAngle(-correction);
+    _motors.forward(FORWARD_SPEED - 30);
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
@@ -90,7 +112,7 @@ void ObstacleAvoider::_avoidObstacle()
 
 void ObstacleAvoider::_goForward()
 {
-    if (_comm.getManeuverCommand(distance, angle))
+    if (_comm.getManeuverCommand(distance, angle ,distance_turn))
     {
         Serial.print("Received command -> Distance: ");
         Serial.print(distance);
@@ -99,13 +121,18 @@ void ObstacleAvoider::_goForward()
         Serial.println(" degrees.");
 
         _encoder.reset();
+
+        if(angle >= 90)
+        {
+            _currentState = TURN;
+        }
         _currentState = AVOIDING;
     }
     else
     {
         float correction = _pid.compute(0, _imu.getHeading());
         _steering.setAngle(-correction);
-        _motors.forward(FORWARD_SPEED - 30);
+        // _motors.forward(FORWARD_SPEED - 30);
     }
 }
 
