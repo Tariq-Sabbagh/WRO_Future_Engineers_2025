@@ -17,6 +17,9 @@ class ObstacleDetector:
         self.FOCAL_LENGTH = 570.0
         self.MAX_DISTANCE_CM = 90.0
         self.debug_mode = debug_mode  # True = debugging, False = production
+        self.last_turn_time = 0  # timestamp of the last detected turn
+        self.turn_cooldown = 6   # seconds to wait before detecting a new turn
+
 
         # Color profiles
         self.COLOR_PROFILES = {
@@ -30,15 +33,15 @@ class ObstacleDetector:
                 'upper': np.array([115, 110, 255]),
                 'offset_adjust': -15
             },
-            'blue': {
-                'lower': np.array([20, 110, 130]),
-                'upper': np.array([255, 145, 180]),
-                'offset_adjust': 0
-            },
             'orange': {
-                'lower': np.array([100, 140, 150]),
-                'upper': np.array([190, 180, 200]),
-                'offset_adjust': 0
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([255, 136, 106]),
+                'offset_adjust': 90
+            },
+            'blue': {
+                'lower': np.array([0, 130, 145]),
+                'upper': np.array([255, 255, 255]),
+                'offset_adjust': -90
             }
         }
 
@@ -162,29 +165,39 @@ class ObstacleDetector:
 
         # Only send commands in production mode
         if not self.debug_mode:
-            self.send_values(travel_dist, turn_angle)
+            self.send_command('AVOID',travel_dist, turn_angle)
 
         print(
             f"{color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
         return True
 
-    def send_values(self, travel_dist, turn_angle):
-        """Send maneuver values to Arduino (production only)"""
+    def send_command(self, cmd_type, value1=0, value2=0):
+        """
+        Send a structured command to the Arduino.
+        cmd_type: str (e.g., 'AVOID', 'TURN')
+        value1, value2: integers depending on command
+        """
         if self.arduino is None:
             return
-
-        # Encode values
-        distance_int = int(round(travel_dist * 10))
-        angle_int = int(round(turn_angle * 10))
-        packet = struct.pack('<hh', distance_int, angle_int)
-
+        
         try:
+            if cmd_type == 'AVOID':
+                # Send travel_dist and turn_angle in tenths (like before)
+                packet = struct.pack('<cHH', b'A', int(round(value1 * 10)), int(round(value2 * 10)))
+            elif cmd_type == 'TURN':
+                # Send only turn angle, value1 is angle in degrees
+                packet = struct.pack('<cH', b'T', int(round(value1 * 10)))
+            else:
+                print(f"Unknown command type: {cmd_type}")
+                return
+            
             self.arduino.write(packet)
+            self.arduino.flush()
         except (serial.SerialException, OSError) as e:
-            print(f"ERROR: Write failed. {e}")
-            if self.arduino:
-                self.arduino.close()
+            print(f"ERROR: Failed to send command: {e}")
+            self.arduino.close()
             self.arduino = None
+
 
     def capture_frame(self):
         """Capture and prepare a frame from camera"""
@@ -198,7 +211,7 @@ class ObstacleDetector:
 
         # Detect both colors
         contours = {}
-        for color in self.COLOR_PROFILES:
+        for color in ['red', 'green']:
             mask = self.detect_color(frame_lab, color)
             contours[color] = self.find_largest_contour(mask)
 
@@ -218,20 +231,81 @@ class ObstacleDetector:
 
         return dominant_color
 
+    def detect_turn(self, frame_rgb, roi_top_ratio=0.6, roi_height_ratio=0.15, roi_width_ratio=0.5):
+        """
+        Detect turn direction based on blue/orange stripe in a vertically-centered ROI.
+        - roi_top_ratio: where ROI starts vertically (as a percentage of frame height)
+        - roi_height_ratio: height of ROI (as a percentage of frame height)
+        - roi_width_ratio: width of ROI (as a percentage of frame width), centered horizontally
+        """
+        frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
+
+        height, width, _ = frame_rgb.shape
+        roi_top = int(height * roi_top_ratio)
+        roi_height = int(height * roi_height_ratio)
+        roi_bottom = min(roi_top + roi_height, height)
+
+        roi_width = int(width * roi_width_ratio)
+        roi_left = int((width - roi_width) / 2)
+        roi_right = roi_left + roi_width
+
+        roi = frame_lab[roi_top:roi_bottom, roi_left:roi_right]
+
+        # Optional debug: draw ROI
+        if self.debug_mode:
+            cv2.rectangle(frame_rgb, (roi_left, roi_top), (roi_right, roi_bottom), (255, 255, 0), 2)
+
+        # Check for blue or orange presence
+        for color in ['blue', 'orange']:
+            mask = self.detect_color(roi, color)
+            pixel_ratio = np.sum(mask > 0) / mask.size
+
+            if self.debug_mode:
+                text_y = roi_top - 10 if color == 'blue' else roi_bottom + 20
+                cv2.putText(frame_rgb, f"{color.upper()} RATIO: {pixel_ratio:.2f}",
+                            (10, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                            (255, 255, 255), 2)
+
+            if pixel_ratio > 0.05:
+                direction = 'LEFT' if color == 'blue' else 'RIGHT'
+                print(f"TURN DETECTED: {direction}")
+                return direction
+
+        return None
+
+    def handle_turn_detection(self, frame_rgb):
+        """Detect turn based on stripes and apply cooldown"""
+        current_time = time.time()
+        if (current_time - self.last_turn_time) < self.turn_cooldown and not self.debug_mode:
+            return  # Still cooling down
+        
+        direction = self.detect_turn(frame_rgb)
+        if direction:
+            angle = -90 if direction == 'LEFT' else 90
+            if not self.debug_mode:
+                self.send_command('TURN', angle)
+            print(f"TURN DETECTED: {direction}, sent TURN command.")
+            self.last_turn_time = current_time
+
+
+
     def process_frame(self):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
         contours = self.detect_obstacles(frame_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
-        if dominant_color:
+        if dominant_color in ['red', 'green']:
             self.process_obstacle(
-                contours[dominant_color],
-                frame_rgb,
+                contours[dominant_color], 
+                frame_rgb, 
                 dominant_color
             )
 
+        self.handle_turn_detection(frame_rgb)
+
         return frame_rgb
+
 
     def run_processing_loop(self):
         """Main processing loop for production"""
