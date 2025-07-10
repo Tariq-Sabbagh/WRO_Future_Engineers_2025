@@ -183,10 +183,10 @@ class ObstacleDetector:
         try:
             if cmd_type == 'AVOID':
                 # Send travel_dist and turn_angle in tenths (like before)
-                packet = struct.pack('<cHH', b'A', int(round(value1 * 10)), int(round(value2 * 10)))
+                packet = struct.pack('<chh', b'A', int(round(value1 * 10)), int(round(value2 * 10)))
             elif cmd_type == 'TURN':
                 # Send only turn angle, value1 is angle in degrees
-                packet = struct.pack('<cH', b'T', int(round(value1 * 10)))
+                packet = struct.pack('<ch', b'T', int(round(value1 * 10)))
             else:
                 print(f"Unknown command type: {cmd_type}")
                 return

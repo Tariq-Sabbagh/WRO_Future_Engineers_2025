@@ -82,7 +82,7 @@ void ObstacleAvoider::_avoidObstacle()
     }
     else
     {
-        _comm.clearSerialBuffer();
+        _comm.resetManeuverValues();
         _timer.start(2000);
         _currentState = IDLE;
     }
@@ -90,7 +90,7 @@ void ObstacleAvoider::_avoidObstacle()
 
 void ObstacleAvoider::_goForward()
 {
-    if (_comm.getManeuverCommand(distance, angle))
+    if (_comm.getManeuverValues(distance, angle))
     {
         Serial.print("Received command -> Distance: ");
         Serial.print(distance);
