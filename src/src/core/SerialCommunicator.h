@@ -1,12 +1,16 @@
 #include <Arduino.h>
 #include "core/Timer.h"
+#pragma once
+
+
 
 class SerialCommunicator {
 public:
     SerialCommunicator();
-    bool getManeuverCommand(float &distance, float &angle, float &diistance_turn);
+    Timer timer;
+    bool getManeuverCommand(float &distance, float &angle);
     void clearSerialBuffer();
 
 private:
-    static const uint8_t PACKET_SIZE = 6;  // 3 int16_t = 6 bytes
+    static const uint16_t PACKET_SIZE = 4;  // 2 int16_t = 4 bytes
 };

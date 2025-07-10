@@ -4,7 +4,9 @@
         "system_error": "cpp",
         "memory": "cpp",
         "random": "cpp",
-        "compare": "cpp"
+        "compare": "cpp",
+        "iterator": "cpp",
+        "cmath": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

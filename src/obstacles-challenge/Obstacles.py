@@ -8,10 +8,6 @@ from picamera2 import Picamera2
 class ObstacleDetector:
     def __init__(self, debug_mode=False):
         # Configuration
-        self.center_roi_mask = None  # Will be created after camera init
-        self.CENTER_ROI_RATIO = 0.3  # 30% of the frame size
-        
-        # Initialize hardware and calibration
         self.SERIAL_PORT = '/dev/ttyUSB0'
         self.BAUDRATE = 115200
         self.CALIBRATION_FILE = "calibration_data.npz"
@@ -32,20 +28,19 @@ class ObstacleDetector:
                 'lower': np.array([0, 0, 151]),
                 'upper': np.array([115, 110, 255]),
                 'offset_adjust': -15
-            },
-            'orange': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 136, 106]),
-                'offset_adjust': 90
-            },
-            'blue': {
-                'lower': np.array([0, 130, 145]),
-                'upper': np.array([255, 255, 255]),
-                'offset_adjust': -90
             }
+            # 'orange': {
+            #     'lower': np.array([0, 0, 0]),
+            #     'upper': np.array([255, 136, 106]),
+            #     'offset_adjust': 90
+            # },
+            # 'blue': {
+            #     'lower': np.array([0, 130, 145]),
+            #     'upper': np.array([255, 255, 255]),
+            #     'offset_adjust': -90
+            # }
             
         }
-        
         
         # State variables
         self.picam2 = None
@@ -54,7 +49,6 @@ class ObstacleDetector:
         # Initialize hardware and calibration
         self.initialize_camera()
         self.load_calibration()
-        self.create_center_roi_mask()
         
         # Only initialize serial in production mode
         if not self.debug_mode:
@@ -126,11 +120,12 @@ class ObstacleDetector:
         largest_contour = max(contours, key=cv2.contourArea)
         return largest_contour if cv2.contourArea(largest_contour) > min_area else None
     
-    def calculate_distance(self, pixel_height ,test = 1):
+    def calculate_distance(self, pixel_height):
         """Calculate distance to object"""
-        return (test * self.FOCAL_LENGTH) / pixel_height if pixel_height else 0
+        return (self.KNOWN_OBSTACLE_HEIGHT_CM * self.FOCAL_LENGTH) / pixel_height if pixel_height else 0
     
-    def calculate_distance_sinside(self, frame_shape, bounding_rect, distance_cm, offset_adjust=15):
+    def calculate_maneuver(self, frame_shape, bounding_rect, distance_cm, offset_adjust=15):
+        """Calculate movement parameters"""
         x, y, w, h = bounding_rect
         obj_center_x = x + w / 2
         frame_center_x = frame_shape[1] / 2
@@ -138,11 +133,6 @@ class ObstacleDetector:
         pixel_offset = obj_center_x - frame_center_x
         cm_per_pixel = self.KNOWN_OBSTACLE_HEIGHT_CM / h
         offset_x_cm = (pixel_offset * cm_per_pixel) + offset_adjust
-        return offset_x_cm
-        
-    def calculate_maneuver(self, frame_shape, bounding_rect, distance_cm, offset_adjust=15):
-        """Calculate movement parameters"""
-        offset_x_cm =self.calculate_distance_sinside(frame_shape, bounding_rect, distance_cm, offset_adjust=15)
         
         tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
         angle = np.arctan2(offset_x_cm, distance_cm)
@@ -153,7 +143,6 @@ class ObstacleDetector:
     def process_obstacle(self, contour, frame_rgb, color_type):
         """Process detected obstacle and optionally send commands"""
         profile = self.COLOR_PROFILES[color_type]
-        # print(profile)
         x, y, w, h = cv2.boundingRect(contour)
         distance = self.calculate_distance(h)
         travel_dist, turn_angle = self.calculate_maneuver(
@@ -172,69 +161,21 @@ class ObstacleDetector:
         
         # Only send commands in production mode
         if not self.debug_mode:
-            self.send_values(travel_dist, turn_angle, 0)
-        
-        # print(f"{color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
-        return True
-    
-   
-    
-    
-    def process_obstacle_with_turn(self, contour, frame_rgb, cube_color_type , turn_color_type , turn_contour):
-        """Process detected obstacle and optionally send commands"""
-        profile = self.COLOR_PROFILES[cube_color_type]
-        profile_turn = self.COLOR_PROFILES[turn_color_type]
-        # print(profile['offset_adjust'])
-        # print(profile)
-        x, y, w, h = cv2.boundingRect(contour)
-        x_turn, y_turn, w_turn, h_turn = cv2.boundingRect(turn_contour)
-        distance = self.calculate_distance(h ,self.KNOWN_OBSTACLE_HEIGHT_CM)
-        distance_turn = self.calculate_distance(h_turn)
-        info_text = f"{cube_color_type.upper()}: {distance:.1f}cm"
-        cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame_rgb, info_text, (x, y - 10), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        info_text = f"{turn_color_type.upper()}: {distance_turn:.1f}cm"
-        
-        cv2.rectangle(frame_rgb, (x_turn, y_turn), (x_turn + w_turn, y_turn + h_turn), (0, 255, 0), 2)
-        cv2.putText(frame_rgb, info_text, (x_turn, y_turn - 10), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            
-        if distance_turn < distance:
-            # print(f"{cube_color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
-            self.send_values(distance + profile['offset_adjust'], 90 ,self.calculate_distance_sinside(
-                frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
-            ) )
-            return False
-        
-        travel_dist, turn_angle = self.calculate_maneuver(
-            frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
-        )
-        
-        # Skip if too far
-        if travel_dist >= self.MAX_DISTANCE_CM:
-            return False
-        
-        # Annotate frame for visualization
-        
-        # Only send commands in production mode
-        if not self.debug_mode:
             self.send_values(travel_dist, turn_angle)
         
-        # print(f"{cube_color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
+        print(f"{color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
         return True
     
-    def send_values(self, travel_dist, turn_angle,distance_turn):
+    def send_values(self, travel_dist, turn_angle):
         """Send maneuver values to Arduino (production only)"""
-        # print(travel_dist ,turn_angle)
         if self.arduino is None:
             return
             
         # Encode values
         distance_int = int(round(travel_dist * 10))
         angle_int = int(round(turn_angle * 10))
-        distance_turn_int = int(round(distance_turn * 10))
-        packet = struct.pack('<hh', distance_int, angle_int ,distance_turn_int)
+        packet = struct.pack('<hh', distance_int, angle_int)
+    
         try:
             self.arduino.write(packet)
         except (serial.SerialException, OSError) as e:
@@ -242,24 +183,7 @@ class ObstacleDetector:
             if self.arduino:
                 self.arduino.close()
             self.arduino = None
-            
-    def create_center_roi_mask(self):
-        """Create a mask for the center region of the frame"""
-        h, w = self.OPTIMIZED_RESOLUTION[1], self.OPTIMIZED_RESOLUTION[0]
-        roi_width = int(w * self.CENTER_ROI_RATIO)
-        roi_height = int(h * self.CENTER_ROI_RATIO)
-        
-        # Calculate center region coordinates
-        x1 = (w - roi_width) // 2
-        y1 = (h - roi_height) // 2
-        x2 = x1 + roi_width
-        y2 = y1 + roi_height
-        
-        # Create a black mask (all zeros)
-        self.center_roi_mask = np.zeros((h, w), dtype=np.uint8)
-        # Set center region to white (255)
-        cv2.rectangle(self.center_roi_mask, (x1, y1), (x2, y2), 255, -1)
-        
+    
     def capture_frame(self):
         """Capture and prepare a frame from camera"""
         frame = self.picam2.capture_array()
@@ -274,11 +198,7 @@ class ObstacleDetector:
         contours = {}
         for color in self.COLOR_PROFILES:
             mask = self.detect_color(frame_lab, color)
-            if color == 'orange' or color == 'blue':
-                mask = cv2.bitwise_and(mask, self.center_roi_mask)
-            
             contours[color] = self.find_largest_contour(mask)
-            
         
         return contours
     
@@ -288,45 +208,26 @@ class ObstacleDetector:
         max_area = 0
         
         for color, contour in contours.items():
-            if contour is not None and (color is not "blue" and color is not "orange"):
+            if contour is not None:
                 area = cv2.contourArea(contour)
                 if area > max_area:
                     max_area = area
                     dominant_color = color
-        return dominant_color
-    
-    def find_dominant_obstacle_turn(self, contours):
-        """Determine which obstacle is most prominent"""
-        dominant_color = None
-        max_area = 0
         
-        for color, contour in contours.items():
-            if contour is not None and (color is not "red" and color is not "green"):
-                area = cv2.contourArea(contour)
-                if area > max_area:
-                    max_area = area
-                    dominant_color = color
         return dominant_color
-    
-    
     
     def process_frame(self):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
         contours = self.detect_obstacles(frame_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
-        turn_color = self.find_dominant_obstacle_turn(contours)
         
-        # print(dominant_color +" " + turn_color)
-        if dominant_color and turn_color is None:
+        if dominant_color:
             self.process_obstacle(
                 contours[dominant_color], 
                 frame_rgb, 
                 dominant_color
             )
-        
-        elif dominant_color and turn_color:
-            self.process_obstacle_with_turn(contours[dominant_color],frame_rgb ,dominant_color ,turn_color , contours[turn_color])
         
         return frame_rgb
 
@@ -338,7 +239,6 @@ class ObstacleDetector:
                 # Process frame without visualization
                 self.process_frame()
                 time.sleep(0.08)
-
         except KeyboardInterrupt:
             print("\nStopping detection...")
         finally:
@@ -409,8 +309,7 @@ def create_flask_app(detector):
         </head>
         <body>
             <h2>WRO Obstacle Detection (DEBUG MODE)</h2>
-            <div class="warning">⚠️ DEBUG MODE: No commands being sent to Arduino ⚠️</div>
-            <img src="/video_feed" width="{display_width}" height="{display_height}">
+            <img src="/video_feed" width="{display_width}" height="{display_height - 10}">
         </body>
         </html>
         """

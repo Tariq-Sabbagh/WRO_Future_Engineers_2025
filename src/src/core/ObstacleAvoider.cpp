@@ -12,7 +12,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
 {
     _currentState = FORWARD;
 }
-float distance, angle,distance_turn;
+float distance, angle,distance_turn,adjacent_side,opposite_side;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
@@ -63,20 +63,38 @@ void ObstacleAvoider::loop()
 }
 void ObstacleAvoider::_turn()
 {
-    if(_ultra.getFrontCm()<=30)
+    Serial.println("turn______________________________");
+    float correction = 0;
+    float currentHeading = _imu.getHeading();
+    float currentDistance = _encoder.getDistanceCm();
+    adjacent_side = (cos(angle) * distance) -20;
+    if (abs(currentDistance) <= adjacent_side)
+        {
+            correction = _pid.compute(0, currentHeading);
+            _steering.setAngle(-correction);
+            _motors.forward(FORWARD_SPEED - 30);
+        }
+    else 
     {
-        _timer.start(1000);
-        float correction_turn = _pid.compute(90, _imu.getHeading());
-        _steering.setAngle(-correction_turn);
-        _motors.backward(FORWARD_SPEED - 30);
-        _timer.isFinished();
-        _currentState = FORWARD;
+        correction = _pid.compute(90, currentHeading);
+        _steering.setAngle(-correction);
+        _motors.forward(FORWARD_SPEED - 30);
+        if (_pid.getError() <=2)
+        {
+            _encoder.reset();
+            while(abs(currentDistance) <= opposite_side)
+            {
+                correction = _pid.compute(0, currentHeading);
+                _steering.setAngle(-correction);
+                _motors.forward(FORWARD_SPEED - 30); 
+            }
+            _currentState = FORWARD;
+        }
+        
+        
     }
+    
 
-   
-    float correction = _pid.compute(0, _imu.getHeading());
-    _steering.setAngle(-correction);
-    _motors.forward(FORWARD_SPEED - 30);
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
@@ -87,32 +105,47 @@ void ObstacleAvoider::_stopUntilTimer()
 void ObstacleAvoider::_avoidObstacle()
 { 
     float correction = 0;
-    float currentHeading = _imu.getHeading();
     float currentDistance = _encoder.getDistanceCm();
-    if (abs(currentDistance) <= distance)
-    {
-        correction = _pid.compute(angle, currentHeading);
-        _steering.setAngle(-correction);
-        _motors.forward(FORWARD_SPEED - 30);
+    opposite_side = abs((sin(angle) * distance) - 15);
+    Serial.println(opposite_side);
+    Serial.println(_ultra.getRightCm() );
+    if(_ultra.getRightCm() > opposite_side){
+        while (abs(currentDistance) <= distance - 10)
+        {
+            _imu.update();
+            _encoder.update();
+            float currentHeading = _imu.getHeading();
+            currentDistance = _encoder.getDistanceCm();
+            // Serial.println(currentHeading);
+            // Serial.println(currentDistance);
+            correction = _pid.compute(angle, currentHeading);
+            _steering.setAngle(-correction);
+            _motors.forward(FORWARD_SPEED - 30);
+        }
+        while (abs(_imu.getHeading()) >= 5)
+        {
+            _imu.update();
+            _encoder.update();
+            // Serial.println(_pid.getError());
+            float currentHeading = _imu.getHeading();
+            correction = _pid.compute(0, currentHeading);
+            _steering.setAngle(-correction);
+        }
+        
+            _comm.clearSerialBuffer();
+            _timer.start(2000);
+            _currentState = IDLE;
+        
     }
-    else if (abs(_imu.getHeading()) >= 5)
+    else 
     {
-        // Serial.println("reset car_______________________________________________________");
-        currentHeading = _imu.getHeading();
-        correction = _pid.compute(0, currentHeading);
-        _steering.setAngle(-correction);
-    }
-    else
-    {
-        _comm.clearSerialBuffer();
-        _timer.start(2000);
-        _currentState = IDLE;
+        _currentState =TURN;
     }
 }
 
 void ObstacleAvoider::_goForward()
 {
-    if (_comm.getManeuverCommand(distance, angle ,distance_turn))
+    if (_comm.getManeuverCommand(distance, angle))
     {
         Serial.print("Received command -> Distance: ");
         Serial.print(distance);
@@ -122,17 +155,13 @@ void ObstacleAvoider::_goForward()
 
         _encoder.reset();
 
-        if(angle >= 90)
-        {
-            _currentState = TURN;
-        }
         _currentState = AVOIDING;
     }
     else
     {
         float correction = _pid.compute(0, _imu.getHeading());
         _steering.setAngle(-correction);
-        // _motors.forward(FORWARD_SPEED - 30);
+        _motors.forward(FORWARD_SPEED - 30);
     }
 }
 
