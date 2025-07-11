@@ -4,7 +4,14 @@ VENV="$HOME/pip-venv/bin/activate"
 PROJECT_DIR="$HOME/wro-future-engineers-2025/src"
 PYTHON_PATH="$PROJECT_DIR/obstacles-challenge"
 PYTHON_SCRIPT="Obstacles.py"
-UPLOAD_PORT="/dev/ttyUSB0"
+
+# Dynamically detect the USB port
+UPLOAD_PORT=$(ls /dev/ttyUSB* 2>/dev/null | head -n 1)
+
+if [ -z "$UPLOAD_PORT" ]; then
+    echo "ERROR: No /dev/ttyUSB device found."
+    exit 1
+fi
 
 function upload() {
     source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
@@ -22,7 +29,7 @@ function monitor() {
 function camera() {
     source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
     cd "$PYTHON_PATH" || exit 1
-    python "$PYTHON_SCRIPT"
+    python "$PYTHON_SCRIPT" --serial "$UPLOAD_PORT" "${@:2}"
 }
 
 case "$1" in
@@ -33,10 +40,10 @@ case "$1" in
         monitor
         ;;
     camera)
-        camera
+        camera "$@"
         ;;
     *)
-        echo "Usage: $0 {camera|upload|monitor}"
+        echo "Usage: $0 {camera|upload|monitor} [args...]"
         exit 1
         ;;
 esac

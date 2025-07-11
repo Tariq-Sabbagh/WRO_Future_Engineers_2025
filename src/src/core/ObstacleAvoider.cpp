@@ -11,9 +11,10 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
 {
     _currentState = FORWARD;
 }
-float distance, angle;
+float distance, angle, _forwardTarget = 0;
 void ObstacleAvoider::setup()
 {
+    _button.waitForPress();
     Wire.begin();
     _motors.setup();
     _steering.setup();
@@ -28,10 +29,10 @@ void ObstacleAvoider::setup()
         Serial.println("FATAL: IMU failed to initialize.");
         _stopAndHalt();
     }
-    _button.waitForPress();
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
+    _comm.clearSerialBuffer();
     Serial.println("Obstacle Avoider Initialized. Waiting for commands...");
 }
 
@@ -40,6 +41,13 @@ void ObstacleAvoider::loop()
     _encoder.update();
     _imu.update();
     _comm.update();
+
+    if (_comm.getTurn() != 0.f)
+    {
+        _forwardTarget += _comm.getTurn();
+        _comm.resetTurn();
+    }
+
     switch (_currentState)
     {
     case AVOIDING:
@@ -54,17 +62,15 @@ void ObstacleAvoider::loop()
         _goForward();
         break;
     }
-    
-    
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
     _motors.stop();
-    if(_timer.isFinished()) _currentState = FORWARD;
-    
+    if (_timer.isFinished())
+        _currentState = FORWARD;
 }
 void ObstacleAvoider::_avoidObstacle()
-{ 
+{
     float correction = 0;
     float currentHeading = _imu.getHeading();
     float currentDistance = _encoder.getDistanceCm();
@@ -100,11 +106,12 @@ void ObstacleAvoider::_goForward()
         Serial.println(" degrees.");
 
         _encoder.reset();
-        _currentState = AVOIDING;
+        _currentState = TURN;
     }
     else
     {
-        float correction = _pid.compute(0, _imu.getHeading());
+
+        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
         _steering.setAngle(-correction);
         _motors.forward(FORWARD_SPEED - 30);
     }

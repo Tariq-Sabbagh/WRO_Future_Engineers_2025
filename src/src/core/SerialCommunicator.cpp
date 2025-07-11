@@ -10,7 +10,6 @@ void SerialCommunicator::clearSerialBuffer() {
 
 void SerialCommunicator::update() {
     if (Serial.available() < 1) return;
-    // Serial.print("serial available");
 
     // if (Serial.peek() == 'A' || Serial.peek() == 'T') {
     uint8_t buffer[PACKET_SIZE];
@@ -57,7 +56,7 @@ void SerialCommunicator::resetManeuverValues() {
     _angle = -1;
 }
 
-int SerialCommunicator::getTurn() {
+float SerialCommunicator::getTurn() {
     return _turn;
 }
 

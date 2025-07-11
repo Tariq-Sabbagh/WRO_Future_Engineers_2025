@@ -7,7 +7,8 @@ from picamera2 import Picamera2
 
 
 class ObstacleDetector:
-    def __init__(self, debug_mode=False):
+    def __init__(self, debug_mode=False, serial_port='/dev/ttyUSB0'):
+        self.SERIAL_PORT = serial_port
         # Configuration
         self.SERIAL_PORT = '/dev/ttyUSB0'
         self.BAUDRATE = 115200
@@ -18,8 +19,7 @@ class ObstacleDetector:
         self.MAX_DISTANCE_CM = 90.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 6   # seconds to wait before detecting a new turn
-
+        self.turn_cooldown = 2   # seconds to wait before detecting a new turn
 
         # Color profiles
         self.COLOR_PROFILES = {
@@ -87,6 +87,7 @@ class ObstacleDetector:
             raw={"size": (2304, 1296)}
         )
         self.picam2.configure(config)
+        self.picam2.set_controls({"ExposureTime": 9000})
         self.picam2.start()
         print("Camera initialized.")
 
@@ -146,6 +147,8 @@ class ObstacleDetector:
 
     def process_obstacle(self, contour, frame_rgb, color_type):
         """Process detected obstacle and optionally send commands"""
+        if color_type not in ['red', 'green']:
+            return
         profile = self.COLOR_PROFILES[color_type]
         x, y, w, h = cv2.boundingRect(contour)
         distance = self.calculate_distance(h)
@@ -165,7 +168,7 @@ class ObstacleDetector:
 
         # Only send commands in production mode
         if not self.debug_mode:
-            self.send_command('AVOID',travel_dist, turn_angle)
+            self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
             f"{color_type.upper()}: Dist={travel_dist:.1f}cm, Angle={turn_angle:.1f}deg")
@@ -174,30 +177,35 @@ class ObstacleDetector:
     def send_command(self, cmd_type, value1=0, value2=0):
         """
         Send a structured command to the Arduino.
-        cmd_type: str (e.g., 'AVOID', 'TURN')
-        value1, value2: integers depending on command
+        cmd_type: str ('AVOID' or 'TURN')
+        value1, value2: float values (interpreted as tenths of units)
         """
         if self.arduino is None:
             return
-        
+
         try:
             if cmd_type == 'AVOID':
-                # Send travel_dist and turn_angle in tenths (like before)
-                packet = struct.pack('<chh', b'A', int(round(value1 * 10)), int(round(value2 * 10)))
+                # Send both distance and angle
+                header = b'A'
+                val1 = int(round(value1 * 10))
+                val2 = int(round(value2 * 10))
             elif cmd_type == 'TURN':
-                # Send only turn angle, value1 is angle in degrees
-                packet = struct.pack('<ch', b'T', int(round(value1 * 10)))
+                # Send angle and dummy value (0)
+                header = b'T'
+                val1 = int(round(value1 * 10))
+                val2 = 0
             else:
                 print(f"Unknown command type: {cmd_type}")
                 return
-            
+
+            packet = struct.pack('<chh', header, val1, val2)  # 5 bytes
             self.arduino.write(packet)
             self.arduino.flush()
+
         except (serial.SerialException, OSError) as e:
             print(f"ERROR: Failed to send command: {e}")
             self.arduino.close()
             self.arduino = None
-
 
     def capture_frame(self):
         """Capture and prepare a frame from camera"""
@@ -231,12 +239,10 @@ class ObstacleDetector:
 
         return dominant_color
 
-    def detect_turn(self, frame_rgb, roi_top_ratio=0.6, roi_height_ratio=0.15, roi_width_ratio=0.5):
+    def detect_turn(self, frame_rgb, roi_top_ratio=0.8, roi_height_ratio=0.2, roi_width_ratio=0.25):
         """
-        Detect turn direction based on blue/orange stripe in a vertically-centered ROI.
-        - roi_top_ratio: where ROI starts vertically (as a percentage of frame height)
-        - roi_height_ratio: height of ROI (as a percentage of frame height)
-        - roi_width_ratio: width of ROI (as a percentage of frame width), centered horizontally
+        Detect turn direction based on the percentage of orange or blue in a vertical ROI.
+        This avoids contours and simply measures pixel presence.
         """
         frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
 
@@ -253,10 +259,12 @@ class ObstacleDetector:
 
         # Optional debug: draw ROI
         if self.debug_mode:
-            cv2.rectangle(frame_rgb, (roi_left, roi_top), (roi_right, roi_bottom), (255, 255, 0), 2)
+            cv2.rectangle(frame_rgb, (roi_left, roi_top),
+                        (roi_right, roi_bottom), (255, 255, 0), 2)
 
-        # Check for blue or orange presence
-        for color in ['blue', 'orange']:
+        # Check both colors separately
+        turn_detected = None
+        for color in ['orange', 'blue']:
             mask = self.detect_color(roi, color)
             pixel_ratio = np.sum(mask > 0) / mask.size
 
@@ -266,29 +274,26 @@ class ObstacleDetector:
                             (10, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                             (255, 255, 255), 2)
 
-            if pixel_ratio > 0.05:
-                direction = 'LEFT' if color == 'blue' else 'RIGHT'
-                print(f"TURN DETECTED: {direction}")
-                return direction
+            if pixel_ratio > 0.1:
+                turn_detected = 'LEFT' if color == 'blue' else 'RIGHT'
+                print(f"TURN DETECTED: {turn_detected}")
+                return turn_detected
 
         return None
+
 
     def handle_turn_detection(self, frame_rgb):
         """Detect turn based on stripes and apply cooldown"""
         current_time = time.time()
         if (current_time - self.last_turn_time) < self.turn_cooldown and not self.debug_mode:
             return  # Still cooling down
-        
         direction = self.detect_turn(frame_rgb)
         if direction:
             angle = -90 if direction == 'LEFT' else 90
             if not self.debug_mode:
-                # self.send_command('TURN', angle)
-                pass
+                self.send_command('TURN', angle)
             print(f"TURN DETECTED: {direction}, sent TURN command.")
             self.last_turn_time = current_time
-
-
 
     def process_frame(self):
         """Process a single frame"""
@@ -296,17 +301,15 @@ class ObstacleDetector:
         contours = self.detect_obstacles(frame_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
-        if dominant_color in ['red', 'green']:
-            self.process_obstacle(
-                contours[dominant_color], 
-                frame_rgb, 
-                dominant_color
-            )
+        # self.process_obstacle(
+        #     contours[dominant_color],
+        #     frame_rgb,
+        #     dominant_color
+        # )
 
         self.handle_turn_detection(frame_rgb)
 
         return frame_rgb
-
 
     def run_processing_loop(self):
         """Main processing loop for production"""
@@ -395,10 +398,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Obstacle Detection System')
     parser.add_argument('--web', action='store_true',
                         help='Enable web interface (debugging only)')
+    parser.add_argument('--serial', type=str, default='/dev/ttyUSB0',
+                        help='Specify serial port (default: /dev/ttyUSB0)')
     args = parser.parse_args()
 
-    # Create detector in appropriate mode
-    detector = ObstacleDetector(debug_mode=args.web)
+    # Create detector with serial port override
+    detector = ObstacleDetector(debug_mode=args.web, serial_port=args.serial)
 
     if args.web:
         print("Starting web server in DEBUG MODE...")

@@ -32,15 +32,15 @@ private:
 
 
     // State Machine
-    enum State { AVOIDING , FORWARD , IDLE};
+    enum State { AVOIDING , FORWARD , IDLE , TURN};
     State _currentState;
 
     // Methods
     void _goForward();
-    void _goforward();
     void _avoidObstacle();
     void _stopAndHalt();
     void _stopUntilTimer();
+    void _turn();
 };
 
 #endif // OBSTACLE_AVOIDER_H

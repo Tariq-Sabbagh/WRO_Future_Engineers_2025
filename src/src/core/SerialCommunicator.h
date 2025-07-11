@@ -12,7 +12,7 @@ public:
     void clearSerialBuffer();
     bool getManeuverValues(float &distance, float &angle);
     void resetManeuverValues();
-    int getTurn();
+    float getTurn();
     void resetTurn();
 
 private:
