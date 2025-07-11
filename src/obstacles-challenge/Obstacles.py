@@ -8,9 +8,8 @@ from picamera2 import Picamera2
 
 class ObstacleDetector:
     def __init__(self, debug_mode=False, serial_port='/dev/ttyUSB0'):
-        self.SERIAL_PORT = serial_port
         # Configuration
-        self.SERIAL_PORT = '/dev/ttyUSB0'
+        self.SERIAL_PORT = serial_port
         self.BAUDRATE = 115200
         self.CALIBRATION_FILE = "calibration_data.npz"
         self.OPTIMIZED_RESOLUTION = (1280, 720)
@@ -19,7 +18,7 @@ class ObstacleDetector:
         self.MAX_DISTANCE_CM = 90.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 2   # seconds to wait before detecting a new turn
+        self.turn_cooldown = 3   # seconds to wait before detecting a new turn
 
         # Color profiles
         self.COLOR_PROFILES = {
@@ -147,8 +146,6 @@ class ObstacleDetector:
 
     def process_obstacle(self, contour, frame_rgb, color_type):
         """Process detected obstacle and optionally send commands"""
-        if color_type not in ['red', 'green']:
-            return
         profile = self.COLOR_PROFILES[color_type]
         x, y, w, h = cv2.boundingRect(contour)
         distance = self.calculate_distance(h)
@@ -260,7 +257,7 @@ class ObstacleDetector:
         # Optional debug: draw ROI
         if self.debug_mode:
             cv2.rectangle(frame_rgb, (roi_left, roi_top),
-                        (roi_right, roi_bottom), (255, 255, 0), 2)
+                          (roi_right, roi_bottom), (255, 255, 0), 2)
 
         # Check both colors separately
         turn_detected = None
@@ -281,7 +278,6 @@ class ObstacleDetector:
 
         return None
 
-
     def handle_turn_detection(self, frame_rgb):
         """Detect turn based on stripes and apply cooldown"""
         current_time = time.time()
@@ -301,11 +297,12 @@ class ObstacleDetector:
         contours = self.detect_obstacles(frame_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
-        # self.process_obstacle(
-        #     contours[dominant_color],
-        #     frame_rgb,
-        #     dominant_color
-        # )
+        if dominant_color:
+            self.process_obstacle(
+                contours[dominant_color],
+                frame_rgb,
+                dominant_color
+            )
 
         self.handle_turn_detection(frame_rgb)
 

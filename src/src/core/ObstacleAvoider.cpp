@@ -14,15 +14,15 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
 float distance, angle, _forwardTarget = 0;
 void ObstacleAvoider::setup()
 {
-    _button.waitForPress();
     Wire.begin();
     _motors.setup();
     _steering.setup();
     _button.setup();
     _encoder.begin();
     while (!Serial)
-        ; // Wait for serial monitor to open (remove for production)
+    ; // Wait for serial monitor to open (remove for production)
     Serial.println("ESP32 Ready");
+    _button.waitForPress();
 
     if (!_imu.setup())
     {
@@ -80,18 +80,17 @@ void ObstacleAvoider::_avoidObstacle()
         _steering.setAngle(-correction);
         _motors.forward(FORWARD_SPEED - 30);
     }
-    else if (abs(_imu.getHeading()) >= 5)
+    else if (abs(currentHeading) >= 5)
     {
         // Serial.println("reset car_______________________________________________________");
-        currentHeading = _imu.getHeading();
         correction = _pid.compute(0, currentHeading);
         _steering.setAngle(-correction);
     }
     else
     {
         _comm.resetManeuverValues();
-        _timer.start(2000);
-        _currentState = IDLE;
+        // _timer.start(500);
+        _currentState = FORWARD;
     }
 }
 
@@ -106,11 +105,11 @@ void ObstacleAvoider::_goForward()
         Serial.println(" degrees.");
 
         _encoder.reset();
-        _currentState = TURN;
+        _imu.reset();
+        _currentState = AVOIDING;
     }
     else
     {
-
         float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
         _steering.setAngle(-correction);
         _motors.forward(FORWARD_SPEED - 30);
