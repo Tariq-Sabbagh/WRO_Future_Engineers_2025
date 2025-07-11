@@ -269,7 +269,7 @@ void runHardwareTests()
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-   test_encoder();
+  //  test_encoder();
   // test_TOF();
   // test_turn();
 

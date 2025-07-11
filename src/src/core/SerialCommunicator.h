@@ -16,16 +16,14 @@ public:
     void resetTurn();
 
 private:
-    static const uint16_t AVOID_PACKET_SIZE = 5; // 'A' + 2x int16
-    static const uint16_t TURN_PACKET_SIZE = 3;  // 'T' + 1x int16
+    static const uint16_t PACKET_SIZE = 5; // Unified: 1 header + 2 values
 
-    float _distance = 0.0f;
-    float _angle = 0.0f;
+    float _distance = -1.0f;
+    float _angle = -1.0f;
     float _turn = 0.0f;
-    char _lastCommand = 0; // Stores 'A' or 'T'
+    char _lastCommand = 0;
 
     Timer timer;
 
-    void processAvoidCommand(uint8_t *buffer);
-    void processTurnCommand(uint8_t *buffer);
+    void processPacket(uint8_t *buffer);
 };

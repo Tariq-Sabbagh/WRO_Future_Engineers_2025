@@ -283,7 +283,8 @@ class ObstacleDetector:
         if direction:
             angle = -90 if direction == 'LEFT' else 90
             if not self.debug_mode:
-                self.send_command('TURN', angle)
+                # self.send_command('TURN', angle)
+                pass
             print(f"TURN DETECTED: {direction}, sent TURN command.")
             self.last_turn_time = current_time
 

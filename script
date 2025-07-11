@@ -1,0 +1,42 @@
+#!/bin/bash
+
+VENV="$HOME/pip-venv/bin/activate"
+PROJECT_DIR="$HOME/wro-future-engineers-2025/src"
+PYTHON_PATH="$PROJECT_DIR/obstacles-challenge"
+PYTHON_SCRIPT="Obstacles.py"
+UPLOAD_PORT="/dev/ttyUSB0"
+
+function upload() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PROJECT_DIR" || exit 1
+    platformio run --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+function monitor() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PROJECT_DIR" || exit 1
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+function camera() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PYTHON_PATH" || exit 1
+    python "$PYTHON_SCRIPT"
+}
+
+case "$1" in
+    upload)
+        upload
+        ;;
+    monitor)
+        monitor
+        ;;
+    camera)
+        camera
+        ;;
+    *)
+        echo "Usage: $0 {camera|upload|monitor}"
+        exit 1
+        ;;
+esac

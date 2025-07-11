@@ -39,6 +39,7 @@ void ObstacleAvoider::loop()
 {
     _encoder.update();
     _imu.update();
+    _comm.update();
     switch (_currentState)
     {
     case AVOIDING:
