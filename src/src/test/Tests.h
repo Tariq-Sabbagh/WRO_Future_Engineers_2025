@@ -13,8 +13,10 @@
 #include "core/Button.h"
 #include "core/Car.h"
 #include "core/Encoder.h"
+#include "core/TOFSensor.h"
 
-Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+
+
 
 Servo servo;
 Button button(BUTTON_PIN);
@@ -24,6 +26,8 @@ Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
 Encoder encoder;
+
+TOFSensor frontSensor(SHT_LOX, 0x20);
 
 /**
  * @brief A simple blocking wait function, an alternative to delay().
@@ -47,22 +51,26 @@ void wait(unsigned long duration_ms, const char *message = "")
 void test_TOF()
 {
   button.waitForPress("TOF Test (10 seconds)");
-  VL53L0X_RangingMeasurementData_t measure;
+  
+  while (!Serial) delay(1);
 
-  Serial.print("Reading a measurement... ");
-  lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
+    Serial.println("Starting TOF Sensor...");
 
-  if (measure.RangeStatus != 4)
-  { // phase failures have incorrect data
-    Serial.print("Distance (mm): ");
-    Serial.println(measure.RangeMilliMeter);
-  }
-  else
-  {
-    Serial.println(" out of range ");
-  }
+    if (!frontSensor.begin()) {
+        Serial.println("Sensor failed to init!");
+        while (1);
+    }
 
-  delay(100);
+    Serial.println("TOF sensor initialized.");
+    Timer timer;
+    timer.start(10000);
+    while(!timer.isFinished()){
+    uint16_t dist = frontSensor.readDistance();
+    Serial.print(millis() / 1000.0);
+    Serial.print("s\t");
+    Serial.print("Distance: ");
+    Serial.print(dist);
+    Serial.println(" mm");}
 }
 
 void test_wire()
@@ -100,7 +108,7 @@ void test_motors()
   testMotors.setup();
 
   Serial.println("Moving FORWARD...");
-  testMotors.forward(FORWARD_SPEED);
+  testMotors.forward(FORWARD_SPEED+55);
   wait(2000, "Forward Motion");
 
   Serial.println("STOPPING...");
@@ -108,7 +116,7 @@ void test_motors()
   wait(1000, "Brake");
 
   Serial.println("Moving BACKWARD...");
-  testMotors.backward(FORWARD_SPEED);
+  testMotors.backward(FORWARD_SPEED+55);
   wait(2000, "Backward Motion");
 
   testMotors.stop();
@@ -145,7 +153,7 @@ void test_steering()
   testSteering.setup();
 
   Serial.println("Turning LEFT...");
-  testSteering.setAngle(SERVO_CENTER_ANGLE - 45);
+  testSteering.setAngle(-90);
   wait(2000, "Full Left");
 
   Serial.println("CENTERING...");
@@ -153,7 +161,7 @@ void test_steering()
   wait(2000, "Center");
 
   Serial.println("Turning RIGHT...");
-  testSteering.setAngle(SERVO_CENTER_ANGLE + 45);
+  testSteering.setAngle(90);
   wait(2000, "Full Right");
 
   testSteering.center();
@@ -167,7 +175,7 @@ void test_distance_sensors()
   Serial.println("Time\tFront\tLeft\tRight");
 
   unsigned long startTime = millis();
-  while (millis() - startTime < 50000)
+  while (millis() - startTime < 1000)
   {
     float front = testDistSensors.getFrontCm();
     float left = testDistSensors.getLeftCm();
@@ -269,8 +277,8 @@ void runHardwareTests()
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  //  test_encoder();
-  // test_TOF();
+  // test_encoder();
+  test_TOF();
   // test_turn();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");

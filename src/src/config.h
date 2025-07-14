@@ -47,6 +47,8 @@ const unsigned long TURN_COOLDOWN_MS = 1500;  // Minimum time between turns.
 
 const int _all_turn = 45;
 
+const int SHT_LOX = 16;
+
 
 
 #endif // CONFIG_H

@@ -23,24 +23,24 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 135, 0]),
-                'upper': np.array([134, 255, 108]),
+                'lower': np.array([0, 146, 0]),
+                'upper': np.array([255, 255, 255]),
                 'offset_adjust': 15
             },
             'green': {
-                'lower': np.array([0, 0, 151]),
-                'upper': np.array([115, 110, 255]),
+                'lower': np.array([0, 0, 139]),
+                'upper': np.array([133, 115, 255]),
                 'offset_adjust': -15
             },
             'orange': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 136, 106]),
-                'offset_adjust': 90
-            },
-            'blue': {
-                'lower': np.array([0, 130, 145]),
+                'lower': np.array([0, 129, 133]),
                 'upper': np.array([255, 255, 255]),
                 'offset_adjust': -90
+            },
+            'blue': {
+                'lower': np.array([124, 0, 0]),
+                'upper': np.array([255, 142, 107]),
+                'offset_adjust': 90
             }
         }
 
@@ -285,7 +285,7 @@ class ObstacleDetector:
             return  # Still cooling down
         direction = self.detect_turn(frame_rgb)
         if direction:
-            angle = -90 if direction == 'LEFT' else 90
+            angle = 90 if direction == 'LEFT' else -90
             if not self.debug_mode:
                 self.send_command('TURN', angle)
             print(f"TURN DETECTED: {direction}, sent TURN command.")
