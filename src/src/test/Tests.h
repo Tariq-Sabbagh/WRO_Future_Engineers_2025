@@ -13,8 +13,10 @@
 #include "core/Button.h"
 #include "core/Car.h"
 #include "core/Encoder.h"
+#include "core/TOFSensor.h"
 
-Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+
+
 
 Servo servo;
 Button button(BUTTON_PIN);
@@ -24,7 +26,7 @@ Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
 Encoder encoder;
-
+TOFSensor frontSensor(SHT_LOX, 0x20);
 /**
  * @brief A simple blocking wait function, an alternative to delay().
  * Prints a message to the serial monitor.
@@ -47,24 +49,27 @@ void wait(unsigned long duration_ms, const char *message = "")
 void test_TOF()
 {
   button.waitForPress("TOF Test (10 seconds)");
-  VL53L0X_RangingMeasurementData_t measure;
+  
+  while (!Serial) delay(1);
 
-  Serial.print("Reading a measurement... ");
-  lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
+    Serial.println("Starting TOF Sensor...");
 
-  if (measure.RangeStatus != 4)
-  { // phase failures have incorrect data
-    Serial.print("Distance (mm): ");
-    Serial.println(measure.RangeMilliMeter);
-  }
-  else
-  {
-    Serial.println(" out of range ");
-  }
+    if (!frontSensor.begin()) {
+        Serial.println("Sensor failed to init!");
+        while (1);
+    }
 
-  delay(100);
+    Serial.println("TOF sensor initialized.");
+    Timer timer;
+    timer.start(10000);
+    while(!timer.isFinished()){
+    uint16_t dist = frontSensor.readDistance();
+    Serial.print(millis() / 1000.0);
+    Serial.print("s\t");
+    Serial.print("Distance: ");
+    Serial.print(dist);
+    Serial.println(" mm");}
 }
-
 void test_wire()
 {
   button.waitForPress("wire Test (10 seconds)");
