@@ -15,7 +15,7 @@ void Steering::setup() {
 }
 
 void Steering::setAngle(int angle) {
-    int constrainedAngle = map(angle,-90,90,SERVO_CENTER_ANGLE-45,SERVO_CENTER_ANGLE+45);
+    int constrainedAngle = map(angle,-90,90,SERVO_CENTER_ANGLE-90,SERVO_CENTER_ANGLE+90);
     _servo.write(constrainedAngle);
     
 }

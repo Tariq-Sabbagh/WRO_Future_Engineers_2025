@@ -150,7 +150,7 @@ void test_steering()
   testSteering.setup();
 
   Serial.println("Turning LEFT...");
-  testSteering.setAngle(SERVO_CENTER_ANGLE - 45);
+  testSteering.setAngle(- 45);
   wait(2000, "Full Left");
 
   Serial.println("CENTERING...");
@@ -158,7 +158,7 @@ void test_steering()
   wait(2000, "Center");
 
   Serial.println("Turning RIGHT...");
-  testSteering.setAngle(SERVO_CENTER_ANGLE + 45);
+  testSteering.setAngle(45);
   wait(2000, "Full Right");
 
   testSteering.center();
@@ -270,7 +270,7 @@ void runHardwareTests()
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
 
   // test_motors();
-  // test_steering();
+  test_steering();
   // test_distance_sensors();
   // test_wire();
   // test_imu();

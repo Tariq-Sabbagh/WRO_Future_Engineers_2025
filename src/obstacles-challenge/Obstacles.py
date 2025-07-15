@@ -30,7 +30,7 @@ class ObstacleDetector:
             'green': {
                 'lower': np.array([0, 0, 146]),
                 'upper': np.array([255, 119, 255]),
-                'offset_adjust': -20
+                'offset_adjust': -25
             },
             'orange': {
                 'lower': np.array([0, 0, 0]),
@@ -140,7 +140,7 @@ class ObstacleDetector:
 
         tendon = np.sqrt(offset_x_cm**2 + distance_cm**2)
         angle = np.arctan2(offset_x_cm, distance_cm)
-        turn_angle = np.degrees(angle)
+        turn_angle = np.degrees(angle) 
 
         return tendon, turn_angle
 
@@ -160,7 +160,7 @@ class ObstacleDetector:
             return False
 
         # Annotate frame for visualization
-        info_text = f"{color_type.upper()}: {travel_dist:.1f}cm, {turn_angle:.1f}deg"
+        info_text = f"{color_type.upper()}: {distance:.1f}cm, {turn_angle:.1f}deg"
         cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.putText(frame_rgb, info_text, (x, y - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)

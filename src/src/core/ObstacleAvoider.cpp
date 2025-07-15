@@ -7,6 +7,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _encoder(),
                                      _button(BUTTON_PIN),
                                      _timer(),
+                                     _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
                                      _comm() // Initialize the communicator
 {
     _currentState = FORWARD;
@@ -21,14 +22,14 @@ void ObstacleAvoider::setup()
     _button.setup();
     _encoder.begin();
     while (!Serial)
-    ; // Wait for serial monitor to open (remove for production)
+        ; // Wait for serial monitor to open (remove for production)
     Serial.println("ESP32 Ready");
-    _button.waitForPress();
     if (!_imu.setup())
     {
         Serial.println("FATAL: IMU failed to initialize.");
         _stopAndHalt();
     }
+    _button.waitForPress();
 
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
@@ -42,7 +43,7 @@ void ObstacleAvoider::loop()
     _encoder.update();
     _imu.update();
     _comm.update();
-    
+
     if (_comm.getTurn() != 0.f)
     {
         _forwardTarget += _comm.getTurn();
@@ -63,7 +64,23 @@ void ObstacleAvoider::loop()
         _goForward();
         break;
     }
+    _get_away_walls();
+
     _servo.setAngle(_steeringAngle);
+}
+void ObstacleAvoider::_get_away_walls()
+{
+    float right = _ultra.getRightCm();
+    float left = _ultra.getLeftCm();
+    const float k = 1.2;
+    if (right <= 40 and right != 0)
+    {
+        _steeringAngle += k * (40 - right);
+    }
+    if (left <= 30 and left != 0)
+    {
+        _steeringAngle -= k * (30 - left);
+    }
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
@@ -86,7 +103,7 @@ void ObstacleAvoider::_avoidObstacle()
     // {
     //     // Serial.println("reset car_______________________________________________________");
     //     correction = _pid.compute(0, currentHeading);
-        // _steeringAngle = -correction;
+    // _steeringAngle = -correction;
     // }
     else
     {
@@ -101,12 +118,12 @@ void ObstacleAvoider::_goForward()
 {
     if (_comm.getManeuverValues(distance, angle))
     {
-        Serial.print("Avoiding Block");
+        Serial.println("Avoiding Block");
 
         _encoder.reset();
         _imu.reset();
 
-        distance += 10;
+        distance += 15;
         _currentState = AVOIDING;
     }
     else
