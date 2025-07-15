@@ -23,12 +23,12 @@ void ObstacleAvoider::setup()
     ; // Wait for serial monitor to open (remove for production)
     Serial.println("ESP32 Ready");
     _button.waitForPress();
-
     if (!_imu.setup())
     {
         Serial.println("FATAL: IMU failed to initialize.");
         _stopAndHalt();
     }
+
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
@@ -78,19 +78,20 @@ void ObstacleAvoider::_avoidObstacle()
     {
         correction = _pid.compute(angle, currentHeading);
         _steering.setAngle(-correction);
-        _motors.forward(FORWARD_SPEED - 30);
+        _motors.forward(FORWARD_SPEED - 40);
     }
-    else if (abs(currentHeading) >= 5)
-    {
-        // Serial.println("reset car_______________________________________________________");
-        correction = _pid.compute(0, currentHeading);
-        _steering.setAngle(-correction);
-    }
+    // else if (abs(currentHeading) >= 5)
+    // {
+    //     // Serial.println("reset car_______________________________________________________");
+    //     correction = _pid.compute(0, currentHeading);
+    //     _steering.setAngle(-correction);
+    // }
     else
     {
         _comm.resetManeuverValues();
-        // _timer.start(500);
-        _currentState = FORWARD;
+        _timer.start(500);
+        _currentState = IDLE;
+        // _currentState = FORWARD;
     }
 }
 
@@ -98,14 +99,12 @@ void ObstacleAvoider::_goForward()
 {
     if (_comm.getManeuverValues(distance, angle))
     {
-        Serial.print("Received command -> Distance: ");
-        Serial.print(distance);
-        Serial.print(" cm, Angle: ");
-        Serial.print(angle);
-        Serial.println(" degrees.");
+        Serial.print("Avoiding Block");
 
         _encoder.reset();
         _imu.reset();
+
+        distance += 10;
         _currentState = AVOIDING;
     }
     else

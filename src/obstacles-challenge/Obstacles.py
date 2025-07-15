@@ -15,21 +15,21 @@ class ObstacleDetector:
         self.OPTIMIZED_RESOLUTION = (1280, 720)
         self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
         self.FOCAL_LENGTH = 570.0
-        self.MAX_DISTANCE_CM = 90.0
+        self.MAX_DISTANCE_CM = 80.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 3   # seconds to wait before detecting a new turn
+        self.turn_cooldown = 2   # seconds to wait before detecting a new turn
 
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 135, 0]),
-                'upper': np.array([134, 255, 108]),
+                'lower': np.array([0, 126, 0]),
+                'upper': np.array([255, 255, 114]),
                 'offset_adjust': 15
             },
             'green': {
-                'lower': np.array([0, 0, 151]),
-                'upper': np.array([115, 110, 255]),
+                'lower': np.array([0, 0, 146]),
+                'upper': np.array([255, 119, 255]),
                 'offset_adjust': -15
             },
             'orange': {
@@ -38,7 +38,7 @@ class ObstacleDetector:
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 130, 145]),
+                'lower': np.array([88, 132, 130]),
                 'upper': np.array([255, 255, 255]),
                 'offset_adjust': -90
             }
@@ -156,6 +156,8 @@ class ObstacleDetector:
         # Skip if too far
         if travel_dist >= self.MAX_DISTANCE_CM:
             return False
+        if w > h:
+            return False
 
         # Annotate frame for visualization
         info_text = f"{color_type.upper()}: {travel_dist:.1f}cm, {turn_angle:.1f}deg"
@@ -212,6 +214,7 @@ class ObstacleDetector:
 
     def detect_obstacles(self, frame_rgb):
         """Detect obstacles in a frame"""
+        
         frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
 
         # Detect both colors
@@ -272,7 +275,7 @@ class ObstacleDetector:
         Detect turn direction based on the percentage of orange or blue in a vertical ROI.
         This avoids contours and simply measures pixel presence.
         """
-        roi = self.crop_frame(frame_rgb, 0.375, 0.8, 0.2, 0.25)
+        roi = self.crop_frame(frame_rgb, 0.375, 0.8, 0.25, 0.15)
         frame_lab = cv2.cvtColor(roi, cv2.COLOR_RGB2LAB)
 
         turn_map = {'blue': 'LEFT', 'orange': 'RIGHT'}
@@ -312,19 +315,19 @@ class ObstacleDetector:
             angle = -90 if direction == 'LEFT' else 90
             if not self.debug_mode:
                 self.send_command('TURN', angle)
-            print(f"TURN DETECTED: {direction}, sent TURN command.")
             self.last_turn_time = current_time
 
     def process_frame(self):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
-        contours = self.detect_obstacles(frame_rgb)
+        obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.05, 0.25, 0.9, 0.6)
+        contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
         if dominant_color:
             self.process_obstacle(
                 contours[dominant_color],
-                frame_rgb,
+                obstacle_roi_rgb,
                 dominant_color
             )
 

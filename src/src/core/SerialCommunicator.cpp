@@ -31,10 +31,10 @@ void SerialCommunicator::processPacket(uint8_t *buffer) {
         _angle    = val2 / 10.0f;
         _lastCommand = 'A';
 
-        Serial.print("AVOID CMD: dist=");
-        Serial.print(_distance);
-        Serial.print(" angle=");
-        Serial.println(_angle);
+        // Serial.print("AVOID CMD: dist=");
+        // Serial.print(_distance);
+        // Serial.print(" angle=");
+        // Serial.println(_angle);
     }
     else if (type == 'T') {
         _turn = val1 / 10.0f;  // Only use first int
