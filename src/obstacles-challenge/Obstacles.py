@@ -25,12 +25,12 @@ class ObstacleDetector:
             'red': {
                 'lower': np.array([0, 126, 0]),
                 'upper': np.array([255, 255, 114]),
-                'offset_adjust': 15
+                'offset_adjust': 20
             },
             'green': {
                 'lower': np.array([0, 0, 146]),
                 'upper': np.array([255, 119, 255]),
-                'offset_adjust': -15
+                'offset_adjust': -20
             },
             'orange': {
                 'lower': np.array([0, 0, 0]),
@@ -128,7 +128,7 @@ class ObstacleDetector:
         """Calculate distance to object"""
         return (self.KNOWN_OBSTACLE_HEIGHT_CM * self.FOCAL_LENGTH) / pixel_height if pixel_height else 0
 
-    def calculate_maneuver(self, frame_shape, bounding_rect, distance_cm, offset_adjust=15):
+    def calculate_maneuver(self, frame_shape, bounding_rect, distance_cm, offset_adjust):
         """Calculate movement parameters"""
         x, y, w, h = bounding_rect
         obj_center_x = x + w / 2

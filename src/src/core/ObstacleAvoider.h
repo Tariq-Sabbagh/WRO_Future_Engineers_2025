@@ -21,13 +21,14 @@ public:
 private:
     // Components
     MotorController _motors;
-    Steering _steering;
+    Steering _servo;
     IMU _imu;
     PIDController _pid;
     Encoder _encoder;
     SerialCommunicator _comm; // The new communicator object
     Button _button;
     Timer _timer;
+    float _steeringAngle;
     bool reset;
 
 

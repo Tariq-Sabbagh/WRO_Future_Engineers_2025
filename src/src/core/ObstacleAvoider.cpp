@@ -1,7 +1,7 @@
 #include "ObstacleAvoider.h"
 
 ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
-                                     _steering(SERVO_PIN),
+                                     _servo(SERVO_PIN),
                                      _imu(),
                                      _pid(),
                                      _encoder(),
@@ -10,13 +10,14 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _comm() // Initialize the communicator
 {
     _currentState = FORWARD;
+    _steeringAngle = 0;
 }
 float distance, angle, _forwardTarget = 0;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
     _motors.setup();
-    _steering.setup();
+    _servo.setup();
     _button.setup();
     _encoder.begin();
     while (!Serial)
@@ -41,7 +42,7 @@ void ObstacleAvoider::loop()
     _encoder.update();
     _imu.update();
     _comm.update();
-
+    
     if (_comm.getTurn() != 0.f)
     {
         _forwardTarget += _comm.getTurn();
@@ -62,6 +63,7 @@ void ObstacleAvoider::loop()
         _goForward();
         break;
     }
+    _servo.setAngle(_steeringAngle);
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
@@ -77,21 +79,21 @@ void ObstacleAvoider::_avoidObstacle()
     if (abs(currentDistance) <= distance)
     {
         correction = _pid.compute(angle, currentHeading);
-        _steering.setAngle(-correction);
-        _motors.forward(FORWARD_SPEED - 40);
+        _steeringAngle = -correction;
+        _motors.forward(FORWARD_SPEED);
     }
     // else if (abs(currentHeading) >= 5)
     // {
     //     // Serial.println("reset car_______________________________________________________");
     //     correction = _pid.compute(0, currentHeading);
-    //     _steering.setAngle(-correction);
+        // _steeringAngle = -correction;
     // }
     else
     {
         _comm.resetManeuverValues();
-        _timer.start(500);
-        _currentState = IDLE;
-        // _currentState = FORWARD;
+        // _timer.start(200);
+        // _currentState = IDLE;
+        _currentState = FORWARD;
     }
 }
 
@@ -110,15 +112,15 @@ void ObstacleAvoider::_goForward()
     else
     {
         float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
-        _steering.setAngle(-correction);
-        _motors.forward(FORWARD_SPEED - 30);
+        _steeringAngle = -correction;
+        _motors.forward(FORWARD_SPEED);
     }
 }
 
 void ObstacleAvoider::_stopAndHalt()
 {
     _motors.stop();
-    _steering.center();
+    _servo.center();
     Serial.println("Execution Halted.");
     while (true)
         ;
