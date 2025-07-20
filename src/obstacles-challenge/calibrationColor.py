@@ -8,7 +8,7 @@ from picamera2 import Picamera2
 
 # --- Configuration ---
 CALIBRATION_FILE = "calibration_data.npz"  # Calibration data file
-OPTIMIZED_RESOLUTION = (1920, 1080)  # Better performance than 4K
+OPTIMIZED_RESOLUTION = (1280, 720)
 
 # --- Load Calibration Data ---
 calibration_data = np.load(CALIBRATION_FILE)

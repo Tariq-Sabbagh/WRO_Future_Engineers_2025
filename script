@@ -16,7 +16,7 @@ fi
 function upload() {
     source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
     cd "$PROJECT_DIR" || exit 1
-    platformio run --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio run -e esp32dev --target upload --upload-port "$UPLOAD_PORT" && \
     platformio device monitor --port "$UPLOAD_PORT" --baud 115200
 }
 
@@ -32,6 +32,14 @@ function camera() {
     python "$PYTHON_SCRIPT" --serial "$UPLOAD_PORT" "${@:2}"
 }
 
+function test_mode() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PROJECT_DIR" || exit 1
+    echo "Uploading firmware in TEST MODE..."
+    platformio run -e esp32dev-test --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
 case "$1" in
     upload)
         upload
@@ -42,8 +50,12 @@ case "$1" in
     camera)
         camera "$@"
         ;;
+    test)
+        test_mode
+        ;;
     *)
-        echo "Usage: $0 {camera|upload|monitor} [args...]"
+        echo "Usage: $0 {camera|upload|monitor|test} [args...]"
         exit 1
         ;;
 esac
+

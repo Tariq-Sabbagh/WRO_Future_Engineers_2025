@@ -172,7 +172,7 @@ void test_distance_sensors()
   Serial.println("Time\tFront\tLeft\tRight");
 
   unsigned long startTime = millis();
-  while (millis() - startTime < 50000)
+  while (millis() - startTime < 10000)
   {
     float front = testDistSensors.getFrontCm();
     float left = testDistSensors.getLeftCm();
@@ -274,7 +274,7 @@ void runHardwareTests()
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  //  test_encoder();
+  // test_encoder();
   // test_TOF();
   // test_turn();
 

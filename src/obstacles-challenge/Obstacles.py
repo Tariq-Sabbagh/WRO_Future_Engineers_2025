@@ -15,10 +15,11 @@ class ObstacleDetector:
         self.OPTIMIZED_RESOLUTION = (1280, 720)
         self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
         self.FOCAL_LENGTH = 570.0
-        self.MAX_DISTANCE_CM = 80.0
+        self.MAX_AREA = 3000.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.turn_cooldown = 2   # seconds to wait before detecting a new turn
+        self.movedPoint = 5
 
         # Color profiles
         self.COLOR_PROFILES = {
@@ -28,8 +29,8 @@ class ObstacleDetector:
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 146]),
-                'upper': np.array([255, 119, 255]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([255, 108, 255]),
                 'offset_adjust': -25
             },
             'orange': {
@@ -115,14 +116,30 @@ class ObstacleDetector:
         return mask
 
     def find_largest_contour(self, mask, min_area=300):
-        """Find largest contour in mask"""
-        contours, _ = cv2.findContours(
-            mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
+        """Find largest valid contour in mask"""
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        valid_contours = []
+
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            contour_area = cv2.contourArea(contour)
+            # Reject if width > height
+            if w > h:
+                continue
+
+            # Reject if area (either rectangle or contour) exceeds MAX_AREA
+            if contour_area <= self.MAX_AREA:
+                continue
+
+            valid_contours.append(contour)
+
+        if not valid_contours:
             return None
 
-        largest_contour = max(contours, key=cv2.contourArea)
+        largest_contour = max(valid_contours, key=cv2.contourArea)
         return largest_contour if cv2.contourArea(largest_contour) > min_area else None
+
 
     def calculate_distance(self, pixel_height):
         """Calculate distance to object"""
@@ -148,16 +165,12 @@ class ObstacleDetector:
         """Process detected obstacle and optionally send commands"""
         profile = self.COLOR_PROFILES[color_type]
         x, y, w, h = cv2.boundingRect(contour)
-        distance = self.calculate_distance(h)
+        distance = self.calculate_distance(h) - self.movedPoint
         travel_dist, turn_angle = self.calculate_maneuver(
             frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
         )
 
-        # Skip if too far
-        if travel_dist >= self.MAX_DISTANCE_CM:
-            return False
-        if w > h:
-            return False
+        
 
         # Annotate frame for visualization
         info_text = f"{color_type.upper()}: {distance:.1f}cm, {turn_angle:.1f}deg"

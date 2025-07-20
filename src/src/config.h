@@ -32,7 +32,7 @@ const int MOTOR_PWM_RESOLUTION = 8;
 const int FORWARD_SPEED = 200; // Speed value from 0-255
 
 // -- Steering Control --
-const int SERVO_CENTER_ANGLE = 92; // The exact angle that makes your servo point straight.
+const int SERVO_CENTER_ANGLE = 108; // The exact angle that makes your servo point straight.
 const int SERVO_MIN_PULSE = 0;   // Servo pulse width for 0 degrees
 const int SERVO_MAX_PULSE = 2000;  // Servo pulse width for 180 degrees
 const float STEERING_KP = 3.5;     // Proportional gain for steering correction. Tune this!

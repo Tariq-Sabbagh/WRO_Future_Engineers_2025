@@ -14,6 +14,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
     _steeringAngle = 0;
 }
 float distance, angle, _forwardTarget = 0;
+int count_turn=0;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
@@ -46,6 +47,7 @@ void ObstacleAvoider::loop()
 
     if (_comm.getTurn() != 0.f)
     {
+        count_turn+=1;
         _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
     }
@@ -65,7 +67,12 @@ void ObstacleAvoider::loop()
         break;
     }
     _get_away_walls();
-
+    if (count_turn >= 12)
+    {
+        _motors.stop();
+        while (true);
+        
+    }
     _servo.setAngle(_steeringAngle);
 }
 void ObstacleAvoider::_get_away_walls()
