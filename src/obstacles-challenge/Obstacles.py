@@ -18,7 +18,7 @@ class ObstacleDetector:
         self.MAX_AREA = 3000.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 2   # seconds to wait before detecting a new turn
+        self.turn_cooldown = 15   # seconds to wait before detecting a new turn
         self.movedPoint = 5
 
         # Color profiles

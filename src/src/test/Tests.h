@@ -61,8 +61,9 @@ void test_TOF()
 
     Serial.println("TOF sensor initialized.");
     Timer timer;
-    timer.start(10000);
+    timer.start(100000);
     while(!timer.isFinished()){
+    test_imu();
     uint16_t dist = frontSensor.readDistance();
     Serial.print(millis() / 1000.0);
     Serial.print("s\t");
@@ -150,7 +151,7 @@ void test_steering()
   testSteering.setup();
 
   Serial.println("Turning LEFT...");
-  testSteering.setAngle(- 45);
+  testSteering.setAngle(-90);
   wait(2000, "Full Left");
 
   Serial.println("CENTERING...");
@@ -158,7 +159,7 @@ void test_steering()
   wait(2000, "Center");
 
   Serial.println("Turning RIGHT...");
-  testSteering.setAngle(45);
+  testSteering.setAngle(90);
   wait(2000, "Full Right");
 
   testSteering.center();
@@ -270,12 +271,12 @@ void runHardwareTests()
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
 
   // test_motors();
-  test_steering();
+  // test_steering();
   // test_distance_sensors();
   // test_wire();
   // test_imu();
   // test_encoder();
-  // test_TOF();
+  test_TOF();
   // test_turn();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");

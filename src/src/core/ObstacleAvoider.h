@@ -12,6 +12,7 @@
 #include <Wire.h>
 #include "Timer.h"
 #include "core/DistanceSensors.h"
+#include "core/TOFSensor.h"
 
 class ObstacleAvoider
 {
@@ -31,6 +32,7 @@ private:
     Button _button;
     Timer _timer;
     DistanceSensors _ultra;
+    TOFSensor _backSensor;
     float _steeringAngle;
     float _backwardTarget;
 
@@ -40,7 +42,9 @@ private:
         FORWARD,
         AVOIDING,
         IDLE,
-        BACKWARD
+        BACKWARD,
+        TURN,
+        RESET
     };
 
     State _currentState;
@@ -53,6 +57,7 @@ private:
     void _stopUntilTimer();
     void _get_away_walls();
     void _turn();
+    void _resetCar();
 };
 
 #endif // OBSTACLE_AVOIDER_H

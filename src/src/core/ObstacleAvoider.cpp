@@ -8,6 +8,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _button(BUTTON_PIN),
                                      _timer(),
                                      _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
+                                     _backSensor(SHT_LOX, 0x20),
                                      _comm() // Initialize the communicator
 {
     _currentState = FORWARD;
@@ -30,6 +31,13 @@ void ObstacleAvoider::setup()
         Serial.println("FATAL: IMU failed to initialize.");
         _stopAndHalt();
     }
+
+    Serial.println("Starting TOF Sensor...");
+
+    if (!_backSensor.begin()) {
+        Serial.println("Sensor failed to init!");
+        while (1);
+    }
     _button.waitForPress();
 
     _pid.setup(3.5, 0, 0);
@@ -45,18 +53,6 @@ void ObstacleAvoider::loop()
     _imu.update();
     _comm.update();
 
-    if (_comm.getTurn() != 0.f)
-    {
-        count_turn += 1;
-        _encoder.reset();
-        while(abs(_encoder.getDistanceCm()) <= 8)
-        {   
-            _encoder.update();
-        }
-        _forwardTarget += _comm.getTurn();
-        _comm.resetTurn();
-    }
-
     switch (_currentState)
     {
     case AVOIDING:
@@ -70,9 +66,15 @@ void ObstacleAvoider::loop()
     case FORWARD:
         _goForward();
         break;
-    case BACKWARD:
-        _goBackward();
+    case TURN:
+        _turn();
         break;
+    case RESET:
+        _resetCar();
+        break;
+    // case BACKWARD:
+    //     _goBackward();
+    //     break;
     }
     _get_away_walls();
     if (count_turn >= 12)
@@ -103,19 +105,33 @@ void ObstacleAvoider::_stopUntilTimer()
     if (_timer.isFinished())
         _currentState = FORWARD;
 }
+
+void ObstacleAvoider::_resetCar()
+{
+    float correction = _pid.compute(-90, _imu.getHeading());
+    _steeringAngle = correction;
+    _motors.move(-FORWARD_SPEED);
+    Serial.print(_backSensor.readDistance());
+    // Serial.println(_imu.getHeading());
+    if (_backSensor.readDistance() <= 200)
+    {
+        _currentState = FORWARD;
+        
+    }
+}
 void ObstacleAvoider::_avoidObstacle()
 {
     float correction = 0;
     float currentHeading = _imu.getHeading();
     float currentDistance = _encoder.getDistanceCm();
-    if (distance <= 40.0) // too close to move forward
-    {
-        Serial.println("Too close — backing up");
-        _encoder.reset();
-        _backwardTarget = 10.0; // back up 20 cm
-        _currentState = BACKWARD;
-        return;
-    }
+    // if (distance <= 40.0) // too close to move forward
+    // {
+    //     Serial.println("Too close — backing up");
+    //     _encoder.reset();
+    //     _backwardTarget = 10.0; // back up 20 cm
+    //     _currentState = BACKWARD;
+    //     return;
+    // }
 
     if (abs(currentDistance) <= distance)
     {
@@ -131,7 +147,17 @@ void ObstacleAvoider::_avoidObstacle()
         _currentState = FORWARD;
     }
 }
-
+void ObstacleAvoider::_turn()
+{
+    float correction = _pid.compute(0, _imu.getHeading());
+    _steeringAngle = -correction;
+    // Serial.print("in turn");
+    if(_ultra.getFrontCm() <= 10)
+    {
+        Serial.print("RESET");
+        _currentState = RESET;
+    }
+}
 void ObstacleAvoider::_goBackward()
 {
     float currentDistance = abs(_encoder.getDistanceCm());
@@ -160,6 +186,14 @@ void ObstacleAvoider::_goForward()
         distance += 15;
         _currentState = AVOIDING;
     }
+    else if (_comm.getTurn() != 0.f)
+    {
+        Serial.println("Turn.....");
+        count_turn++;
+        _currentState = TURN;
+    }
+    
+    
     else
     {
         float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
