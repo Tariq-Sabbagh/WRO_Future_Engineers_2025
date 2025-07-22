@@ -40,6 +40,7 @@ config = picam2.create_preview_configuration(
         raw={"size": (2304, 1296)}  # Half-resolution binning
     )   
 picam2.configure(config)
+picam2.set_controls({"ExposureTime": 10000})
 picam2.start()
 time.sleep(2)  # Camera warm-up
 

@@ -27,6 +27,14 @@ void MotorController::backward(int speed) {
     analogWrite(_speed_pin, speed);
 }
 
+void MotorController::move(int speed)
+{
+    if (speed > 0)
+        forward(speed);
+    else
+        backward(-speed);
+}
+
 void MotorController::stop() {
     digitalWrite(_dir1_pin, LOW);
     digitalWrite(_dir2_pin, LOW);

@@ -10,6 +10,7 @@ public:
     void setup();
     void forward(int speed);
     void backward(int speed);
+    void move(int speed);
     void stop();
 
 private:

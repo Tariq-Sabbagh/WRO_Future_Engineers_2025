@@ -29,8 +29,8 @@ class ObstacleDetector:
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 108, 255]),
+                'lower': np.array([0, 97, 150]),
+                'upper': np.array([255, 114, 255]),
                 'offset_adjust': -25
             },
             'orange': {
@@ -87,7 +87,7 @@ class ObstacleDetector:
             raw={"size": (2304, 1296)}
         )
         self.picam2.configure(config)
-        self.picam2.set_controls({"ExposureTime": 9000})
+        self.picam2.set_controls({"ExposureTime": 10000})
         self.picam2.start()
         print("Camera initialized.")
 
@@ -179,7 +179,7 @@ class ObstacleDetector:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if not self.debug_mode:
+        if not self.debug_mode and travel_dist <= 60:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
@@ -382,7 +382,7 @@ def create_flask_app(detector):
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' +
                        bytearray(encoded_frame) + b'\r\n')
-            time.sleep(0.1)
+            time.sleep(0.08)
 
     @app.route('/video_feed')
     def video_feed():

@@ -13,7 +13,8 @@
 #include "Timer.h"
 #include "core/DistanceSensors.h"
 
-class ObstacleAvoider {
+class ObstacleAvoider
+{
 public:
     ObstacleAvoider();
     void setup();
@@ -31,15 +32,22 @@ private:
     Timer _timer;
     DistanceSensors _ultra;
     float _steeringAngle;
-    bool reset;
-
+    float _backwardTarget;
 
     // State Machine
-    enum State { AVOIDING , FORWARD , IDLE , TURN};
+    enum State
+    {
+        FORWARD,
+        AVOIDING,
+        IDLE,
+        BACKWARD
+    };
+
     State _currentState;
 
     // Methods
     void _goForward();
+    void _goBackward();
     void _avoidObstacle();
     void _stopAndHalt();
     void _stopUntilTimer();

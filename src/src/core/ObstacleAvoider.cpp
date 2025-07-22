@@ -14,7 +14,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
     _steeringAngle = 0;
 }
 float distance, angle, _forwardTarget = 0;
-int count_turn=0;
+int count_turn = 0;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
@@ -47,7 +47,12 @@ void ObstacleAvoider::loop()
 
     if (_comm.getTurn() != 0.f)
     {
-        count_turn+=1;
+        count_turn += 1;
+        _encoder.reset();
+        while(abs(_encoder.getDistanceCm()) <= 8)
+        {   
+            _encoder.update();
+        }
         _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
     }
@@ -65,13 +70,16 @@ void ObstacleAvoider::loop()
     case FORWARD:
         _goForward();
         break;
+    case BACKWARD:
+        _goBackward();
+        break;
     }
     _get_away_walls();
     if (count_turn >= 12)
     {
         _motors.stop();
-        while (true);
-        
+        while (true)
+            ;
     }
     _servo.setAngle(_steeringAngle);
 }
@@ -100,23 +108,42 @@ void ObstacleAvoider::_avoidObstacle()
     float correction = 0;
     float currentHeading = _imu.getHeading();
     float currentDistance = _encoder.getDistanceCm();
+    if (distance <= 40.0) // too close to move forward
+    {
+        Serial.println("Too close — backing up");
+        _encoder.reset();
+        _backwardTarget = 10.0; // back up 20 cm
+        _currentState = BACKWARD;
+        return;
+    }
+
     if (abs(currentDistance) <= distance)
     {
         correction = _pid.compute(angle, currentHeading);
         _steeringAngle = -correction;
         _motors.forward(FORWARD_SPEED);
     }
-    // else if (abs(currentHeading) >= 5)
-    // {
-    //     // Serial.println("reset car_______________________________________________________");
-    //     correction = _pid.compute(0, currentHeading);
-    // _steeringAngle = -correction;
-    // }
     else
     {
         _comm.resetManeuverValues();
         // _timer.start(200);
         // _currentState = IDLE;
+        _currentState = FORWARD;
+    }
+}
+
+void ObstacleAvoider::_goBackward()
+{
+    float currentDistance = abs(_encoder.getDistanceCm());
+    if (currentDistance < _backwardTarget)
+    {
+        _motors.move(-FORWARD_SPEED);
+        _steeringAngle = 0;
+    }
+    else
+    {
+        Serial.println("Finished backing up.");
+        _encoder.reset();
         _currentState = FORWARD;
     }
 }
