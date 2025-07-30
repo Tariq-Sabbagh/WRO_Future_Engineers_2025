@@ -47,15 +47,15 @@ void loop() {
 
     
     myServo.write(angle);
-    if (speed >= 0) {
+    if (speed >= 0 ) {
       digitalWrite(MOTOR_DIR1_PIN, HIGH); // Forward
       digitalWrite(MOTOR_DIR2_PIN, LOW); // Forward
-      analogWrite(MOTOR_SPEED_PIN, constrain(speed, 0, 255));
+      analogWrite(MOTOR_SPEED_PIN, constrain(speed, 0, 200));
     } else {
        digitalWrite(MOTOR_DIR1_PIN, LOW); // Forward
       digitalWrite(MOTOR_DIR2_PIN, LOW); // Forward
       analogWrite(MOTOR_SPEED_PIN, constrain(speed, 0, 255));
     }
-    // delay(100);
+    delay(100);
   }
 }

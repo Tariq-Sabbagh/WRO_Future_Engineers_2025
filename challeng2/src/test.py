@@ -28,15 +28,13 @@ full_res = picam2.sensor_resolution  # Typically something like (4624, 3472) dep
 
 # Configuration using full resolution
 full_res = picam2.sensor_resolution  # e.g., (4624, 3472)
-
+OPTIMIZED_RESOLUTION = (1280, 720)
 # Create config: capture at full res, but output 640x480
 config = picam2.create_preview_configuration(
-    sensor={"output_size": full_res, "bit_depth": 12},  # Capture full sensor resolution
-    main={"size": (640, 480), "format": "BGR888"}       # Downscale output to 640x480
-)   
-picam2.set_controls({
-    "ExposureTime": 2000,     # 1/1000 sec
- })
+            main={"size": OPTIMIZED_RESOLUTION},
+            raw={"size": (2304, 1296)}
+        )   
+ 
 # Apply config and start
 picam2.align_configuration(config)
 picam2.configure(config)
@@ -587,11 +585,11 @@ if __name__ == '__main__':
                       t += 1
                       
                   #if 2 laps have been completed and the last pillar is red initiate a regular three point turn
-                  if t == 8:
-                      if lastTarget == redTarget:
-                          write(speed,straightConst)    
-                          reverse = "turning"
-                      ROI3[1] = 120
+                #   if t == 8:
+                #       if lastTarget == redTarget:
+                #           write(speed,straightConst)    
+                #           reverse = "turning"
+                #       ROI3[1] = 120
                   
             # if a car is parking or performing a three-point turn
             if not parkingR and not parkingL:
@@ -608,6 +606,7 @@ if __name__ == '__main__':
                 angle = max(min(angle, sharpLeft), sharpRight)
                 
                 #write angle to servo
+                # time.sleep(0.)
                 write(speed ,angle)
         
         #keep frame rate at 30 fps

@@ -10,11 +10,11 @@ rRed = [[0, 130, 0], [123, 255, 90]]
 rGreen = [[0, 0, 150], [120, 115, 255]]
 rOrange = [[120, 115, 0], [255, 255, 130]]
 rBlue = [[90, 129, 135], [255, 255, 255]]
-rBlack = [[0, 73, 0], [90, 142, 148]]
+rBlack = [[0, 73, 36], [80, 140, 150]]
 
 
-redTarget = 10 
-greenTarget = 590
+redTarget = 40 
+greenTarget = 600
 
 
 #ROI1: for finding left lane
@@ -25,7 +25,7 @@ greenTarget = 590
 # order: x1, y1, x2, y2
 ROI1 = [0, 175, 330, 265] # 165, 255
 ROI2 = [330, 175, 640, 265]
-ROI3 = [redTarget+50 , 120, greenTarget-50 , 480] #+- 40 [redTarget - 40, 110, greenTarget + 40, 335]
+ROI3 = [redTarget , 120, greenTarget , 480] #+- 40 [redTarget - 40, 110, greenTarget + 40, 335]
 ROI4 = [200, 420, 400, 480] #250, 300
 ROI5 = [0, 0, 0, 0] #270, 120, 370, 140
 
@@ -38,7 +38,7 @@ straightConst = 90
 tempParking = False
 endConst = 30
 
-kp = 0.005 #proportional value for PD steering 0.015
+kp = 0.002 #proportional value for PD steering 0.015
 kd = 0.01 #derivative value for PD steering 0.01
 cKp = 0.15 #value of proportional for proportional steering for avoiding signal pillars
 cKd = 0.15 #value of derivative for proportional and derivative sterring for avoiding signal pillars
@@ -71,7 +71,7 @@ tSignal = False #boolean detecting whether a coloured line is currently seen, ma
 rightArea, leftArea, areaFront, areaFrontMagenta, tArea = 0, 0, 0, 0, 0
 maxDist = 320 #no pillar can be detected if further than this value
 pillarAtStart = -1
-minArea = 10
+minArea = 200
 maxArea =1000000
 
 
