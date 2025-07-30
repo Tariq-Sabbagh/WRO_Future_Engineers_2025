@@ -1,0 +1,58 @@
+#!/bin/bash
+
+VENV="$HOME/pip-venv/bin/activate"
+PROJECT_DIR="$HOME/test/challeng2"
+PYTHON_PATH="$PROJECT_DIR/src"
+PYTHON_SCRIPT="test.py"
+PYTHON_COLOR="ColourTesterLAB.py"
+ESP_PATH="test/my_esp_project"
+
+# Dynamically detect the USB port
+UPLOAD_PORT=$(ls /dev/ttyUSB* 2>/dev/null | head -n 1)
+export SERIAL_PORT=$UPLOAD_PORT
+
+if [ -z "$UPLOAD_PORT" ]; then
+    echo "ERROR: No /dev/ttyUSB device found."
+    exit 1
+fi
+
+function upload() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$ESP_PATH" || exit 1
+    platformio run --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+function monitor() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$ESP_PATH" || exit 1
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+function camera() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PYTHON_PATH" || exit 1
+    python "$PYTHON_SCRIPT" --serial "$UPLOAD_PORT" "${@:2}"
+}
+function color() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+    cd "$PYTHON_PATH" || exit 1
+    python "$PYTHON_COLOR" --serial "$UPLOAD_PORT" "${@:2}"
+}
+
+case "$1" in
+    upload)
+        upload
+        ;;
+    monitor)
+        monitor
+        ;;
+    camera)
+        camera "$@"
+        ;;
+    *)
+     
+        echo "Usage: $0 {camera|upload|monitor} [args...]"
+        exit 1
+        ;;
+esac
