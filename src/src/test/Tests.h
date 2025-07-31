@@ -14,6 +14,8 @@
 #include "core/Car.h"
 #include "core/Encoder.h"
 #include "core/TOFSensor.h"
+#include "core/SerialCommunicator.h"
+
 
 
 
@@ -61,9 +63,8 @@ void test_TOF()
 
     Serial.println("TOF sensor initialized.");
     Timer timer;
-    timer.start(100000);
+    timer.start(10000);
     while(!timer.isFinished()){
-    test_imu();
     uint16_t dist = frontSensor.readDistance();
     Serial.print(millis() / 1000.0);
     Serial.print("s\t");
@@ -147,7 +148,7 @@ void test_encoder()
 
 void test_steering()
 {
-  button.waitForPress("Steering Test");
+ button.waitForPress("Steering Test");
   testSteering.setup();
 
   Serial.println("Turning LEFT...");
@@ -254,6 +255,25 @@ void test_pid_controller()
     correction = pid.compute(0, -50);
     Serial.println(correction);
   }
+}
+
+void test_serial_comm() {
+  button.waitForPress("Serial Communication Test (10 seconds)");
+
+  SerialCommunicator communicator;
+  communicator.clearSerialBuffer();
+  
+  Serial.println("Listening for serial commands from Raspberry Pi...");
+  Serial.println("Send 5-byte packets: ['A' or 'T'] [val1 LSB] [val1 MSB] [val2 LSB] [val2 MSB]");
+
+  Timer timer;
+  timer.start(10000);  // 10 seconds
+  while (!timer.isFinished()) {
+    communicator.update();
+    delay(100);  // Slight delay to avoid spamming
+  }
+
+  Serial.println("Serial communication test complete.");
 }
 
 void test_turn()

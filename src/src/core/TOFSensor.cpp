@@ -24,12 +24,30 @@ bool TOFSensor::begin() {
 uint16_t TOFSensor::readDistance() {
     _lox.rangingTest(&_measure, false);
 
+    uint16_t rawDistance;
     if (_measure.RangeStatus != 4) {
-        return _measure.RangeMilliMeter;
+        rawDistance = _measure.RangeMilliMeter;
     } else {
-        return _defaultDistance; // return max or default value if out of range
+        rawDistance = _defaultDistance;
     }
+
+    // Add to circular buffer
+    _distanceBuffer[_bufferIndex++] = rawDistance;
+    if (_bufferIndex >= TOF_FILTER_SIZE) {
+        _bufferIndex = 0;
+        _bufferFilled = true;
+    }
+
+    // Compute average
+    uint32_t sum = 0;
+    uint8_t count = _bufferFilled ? TOF_FILTER_SIZE : _bufferIndex;
+    for (uint8_t i = 0; i < count; i++) {
+        sum += _distanceBuffer[i];
+    }
+
+    return sum / count;
 }
+
 
 bool TOFSensor::isOutOfRange() {
     return (_measure.RangeStatus == 4);

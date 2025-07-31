@@ -26,6 +26,11 @@ void PIDController::setOutputLimits(float min, float max) {
     outputMax = max;
 }
 
+float PIDController::geterror()
+{
+    return prevError;
+}
+
 void PIDController::reset() {
     prevError = 0.0;
     integral = 0.0;

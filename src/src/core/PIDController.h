@@ -8,6 +8,7 @@ public:
     void setOutputLimits(float min, float max);
     void reset();
     float compute(float setpoint, float input);
+    float geterror();
 
 private:
     float kp, ki, kd;

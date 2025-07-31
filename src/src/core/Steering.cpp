@@ -17,6 +17,8 @@ void Steering::setup() {
 void Steering::setAngle(int angle) {
     int constrainedAngle = map(angle,-90,90,SERVO_CENTER_ANGLE-60,SERVO_CENTER_ANGLE+60);
     _servo.write(constrainedAngle);
+    // Serial.println(constrainedAngle);
+    // Serial.println(_servo_pin);
     
 }
 
