@@ -87,7 +87,7 @@ class ObstacleDetector:
             raw={"size": (2304, 1296)}
         )
         self.picam2.configure(config)
-        self.picam2.set_controls({"ExposureTime": 9000})
+        self.picam2.set_controls({"ExposureTime": 10000})
         self.picam2.start()
         print("Camera initialized.")
 
@@ -115,7 +115,7 @@ class ObstacleDetector:
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
 
-    def find_largest_contour(self, mask, min_area=300):
+    def find_largest_contour(self, mask, min_area=3000):
         """Find largest valid contour in mask"""
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -125,9 +125,9 @@ class ObstacleDetector:
             x, y, w, h = cv2.boundingRect(contour)
             contour_area = cv2.contourArea(contour)
             # Reject if width > height
-            if w > h:
+            if w >= h or h > 3 * w:
                 continue
-
+    
             # Reject if area (either rectangle or contour) exceeds MAX_AREA
             if contour_area <= self.MAX_AREA:
                 continue
@@ -269,9 +269,9 @@ class ObstacleDetector:
         roi_bottom = min(roi_top + roi_height, height)
 
         # Debug visualization
-        if self.debug_mode:
-            cv2.rectangle(frame, (roi_left, roi_top),
-                          (roi_right, roi_bottom), (255, 255, 0), 2)
+        
+        cv2.rectangle(frame, (roi_left, roi_top),
+                        (roi_right, roi_bottom), (255, 255, 0), 2)
 
         return frame[roi_top:roi_bottom, roi_left:roi_right]
 
@@ -345,7 +345,17 @@ class ObstacleDetector:
     def process_frame(self):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
-        obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.05, 0.25, 0.9, 0.6)
+        
+        time_since_turn = time.time() - self.last_turn_time
+        in_turn_cooldown = time_since_turn  + 3 < self.turn_cooldown
+
+        if in_turn_cooldown:
+        # Shrink the ROI to avoid false positives
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.25, 0.5, 0.55)
+        else:
+        # Full-size ROI
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.25, 0.8, 0.55)
+
         contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
@@ -449,15 +459,40 @@ if __name__ == '__main__':
                         help='Enable web interface (debugging only)')
     parser.add_argument('--serial', type=str, default='/dev/ttyUSB0',
                         help='Specify serial port (default: /dev/ttyUSB0)')
+    parser.add_argument('--both', action='store_true',
+                        help='Enable both video stream and serial communication')
     args = parser.parse_args()
 
+
     # Create detector with serial port override
-    detector = ObstacleDetector(debug_mode=args.web, serial_port=args.serial)
+    # detector = ObstacleDetector(debug_mode=args.web, serial_port=args.serial)
+    
+    if args.web:
+        detector = ObstacleDetector(debug_mode=True, serial_port=args.serial)
+    elif args.both:
+        detector = ObstacleDetector(debug_mode=False, serial_port=args.serial)
+    else:
+        detector = ObstacleDetector(debug_mode=False, serial_port=args.serial)
 
     if args.web:
-        print("Starting web server in DEBUG MODE...")
+        print("Starting web server in DEBUG MODE (no serial)...")
         app = create_flask_app(detector)
         app.run(host='0.0.0.0', port=8080, threaded=True)
+    elif args.both:
+        print("Starting web server in COMBINED MODE (serial + video)...")
+        app = create_flask_app(detector)
+
+        # Run video + serial in a separate thread
+        import threading
+
+        def processing_loop():
+            detector.run_processing_loop()
+
+        t = threading.Thread(target=processing_loop)
+        t.daemon = True
+        t.start()
+
+        app.run(host='0.0.0.0', port=8080, threaded=True)
     else:
-        print("Running in PRODUCTION MODE: Commands will be sent to Arduino")
+        print("Running in PRODUCTION MODE: Commands will be sent to Arduino (no video)")
         detector.run_processing_loop()
