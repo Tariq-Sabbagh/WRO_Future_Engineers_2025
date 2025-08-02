@@ -18,29 +18,29 @@ class ObstacleDetector:
         self.MAX_AREA = 3000.0
         self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 6   # seconds to wait before detecting a new turn
+        self.turn_cooldown = 7   # seconds to wait before detecting a new turn
         self.movedPoint = 5
 
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 132, 0]),
-                'upper': np.array([116, 255, 110]),
+                'lower': np.array([0, 161, 0]),
+                'upper': np.array([255, 255, 174]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 147]),
-                'upper': np.array([153, 115, 255]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([255, 113, 255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([122, 126, 0]),
-                'upper': np.array([255, 255, 106]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([145, 135, 108]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([91, 120, 148]),
-                'upper': np.array([130, 255, 255]),
+                'lower': np.array([54, 128, 139]),
+                'upper': np.array([255, 255, 255]),
                 'offset_adjust': -90
             }
         }
@@ -115,7 +115,7 @@ class ObstacleDetector:
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
 
-    def find_largest_contour(self, mask, min_area=300):
+    def find_largest_contour(self, mask, min_area=3000):
         """Find largest valid contour in mask"""
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -125,9 +125,9 @@ class ObstacleDetector:
             x, y, w, h = cv2.boundingRect(contour)
             contour_area = cv2.contourArea(contour)
             # Reject if width > height
-            if w > h:
+            if w >= h or h > 3 * w:
                 continue
-
+    
             # Reject if area (either rectangle or contour) exceeds MAX_AREA
             if contour_area <= self.MAX_AREA:
                 continue
@@ -227,8 +227,14 @@ class ObstacleDetector:
 
     def detect_obstacles(self, frame_rgb):
         """Detect obstacles in a frame"""
-        
-        frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
+
+        # Match calibration preprocessing
+        frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        frame_lab = cv2.merge((cl, a, b))
 
         # Detect both colors
         contours = {}
@@ -289,32 +295,38 @@ class ObstacleDetector:
         This avoids contours and simply measures pixel presence.
         """
         roi = self.crop_frame(frame_rgb, 0.375, 0.8, 0.25, 0.15)
-        frame_lab = cv2.cvtColor(roi, cv2.COLOR_RGB2LAB)
-
+    
+        # Match calibration color preprocessing
+        roi_bgr = cv2.cvtColor(roi, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        frame_lab = cv2.merge((cl, a, b))
+    
         turn_map = {'blue': 'LEFT', 'orange': 'RIGHT'}
         debug_positions = {'blue': 30, 'orange': 60}
-
+    
         for color in turn_map:
             mask = self.detect_color(frame_lab, color)
             pixel_ratio = np.sum(mask > 0) / mask.size
-
+    
             if self.debug_mode:
                 cv2.putText(frame_rgb, f"{color.upper()} RATIO: {pixel_ratio:.2f}",
-                            (10, debug_positions[color]
-                             ), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                            (255, 255, 255), 2)
-
+                            (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6, (255, 255, 255), 2)
+    
             if pixel_ratio > 0.1:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
-
+    
                 if self.debug_mode:
                     cv2.putText(frame_rgb, f"TURN DETECTED: {turn_detected}",
-                                (10, frame_rgb.shape[0] -
-                                 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                                (0, 255, 255), 2)
-
+                                (10, frame_rgb.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.8, (0, 255, 255), 2)
+    
                 return turn_detected
+
 
         return None
 
@@ -333,7 +345,17 @@ class ObstacleDetector:
     def process_frame(self):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
-        obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.05, 0.25, 0.9, 0.6)
+        
+        time_since_turn = time.time() - self.last_turn_time
+        in_turn_cooldown = time_since_turn  + 3 < self.turn_cooldown
+
+        if in_turn_cooldown:
+        # Shrink the ROI to avoid false positives
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.25, 0.5, 0.55)
+        else:
+        # Full-size ROI
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.25, 0.8, 0.55)
+
         contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 

@@ -69,6 +69,14 @@ def video_feed():
             frame = picam2.capture_array()
             frame = cv2.flip(frame, -1)
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+
+            # Apply CLAHE to L channel to normalize lighting
+            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+            cl = clahe.apply(l)
+
+            # Merge back to LAB image
+            lab_clahe = cv2.merge((cl, a, b))
 
             lower = (
                 lab_range["l_min"],
@@ -82,22 +90,12 @@ def video_feed():
             )
 
             # LAB mask
-            lab_mask = cv2.inRange(lab, lower, upper)
-
-            # Create polygon mask for field
-            # mask_field = np.zeros(frame.shape[:2], dtype=np.uint8)
+            lab_mask = cv2.inRange(lab_clahe, lower, upper)
             
-            # Define polygon points based on your field shape in the image
-            # polygon_points = np.array([
-            #     [0, 880],   # bottom-left
-            #     [4608, 880],  # bottom-right
-            #     [4608, 2000],  # top-right
-            #     [0, 2000],   # top-left
-            # ])
+            kernel = np.ones((5, 5), np.uint8)
+            lab_mask = cv2.morphologyEx(lab_mask, cv2.MORPH_OPEN, kernel)
+            lab_mask = cv2.morphologyEx(lab_mask, cv2.MORPH_CLOSE, kernel)
 
-            # cv2.fillPoly(mask_field, [polygon_points], 255)
-
-            # Combine the two masks (field AND color filter)
             combined_mask = cv2.bitwise_and(lab_mask, lab_mask, mask=lab_mask)
 
             # Apply the combined mask

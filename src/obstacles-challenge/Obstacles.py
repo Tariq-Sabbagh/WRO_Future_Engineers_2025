@@ -24,23 +24,23 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 132, 0]),
-                'upper': np.array([116, 255, 110]),
+                'lower': np.array([0, 161, 0]),
+                'upper': np.array([255, 255, 174]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 147]),
-                'upper': np.array([153, 115, 255]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([255, 113, 255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([122, 126, 0]),
-                'upper': np.array([255, 255, 106]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([145, 135, 108]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([91, 120, 148]),
-                'upper': np.array([130, 255, 255]),
+                'lower': np.array([54, 128, 139]),
+                'upper': np.array([255, 255, 255]),
                 'offset_adjust': -90
             }
         }
@@ -87,7 +87,7 @@ class ObstacleDetector:
             raw={"size": (2304, 1296)}
         )
         self.picam2.configure(config)
-        self.picam2.set_controls({"ExposureTime": 10000})
+        self.picam2.set_controls({"ExposureTime": 9000})
         self.picam2.start()
         print("Camera initialized.")
 
@@ -227,8 +227,14 @@ class ObstacleDetector:
 
     def detect_obstacles(self, frame_rgb):
         """Detect obstacles in a frame"""
-        
-        frame_lab = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2LAB)
+
+        # Match calibration preprocessing
+        frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        frame_lab = cv2.merge((cl, a, b))
 
         # Detect both colors
         contours = {}
@@ -289,32 +295,38 @@ class ObstacleDetector:
         This avoids contours and simply measures pixel presence.
         """
         roi = self.crop_frame(frame_rgb, 0.375, 0.8, 0.25, 0.15)
-        frame_lab = cv2.cvtColor(roi, cv2.COLOR_RGB2LAB)
-
+    
+        # Match calibration color preprocessing
+        roi_bgr = cv2.cvtColor(roi, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        frame_lab = cv2.merge((cl, a, b))
+    
         turn_map = {'blue': 'LEFT', 'orange': 'RIGHT'}
         debug_positions = {'blue': 30, 'orange': 60}
-
+    
         for color in turn_map:
             mask = self.detect_color(frame_lab, color)
             pixel_ratio = np.sum(mask > 0) / mask.size
-
+    
             if self.debug_mode:
                 cv2.putText(frame_rgb, f"{color.upper()} RATIO: {pixel_ratio:.2f}",
-                            (10, debug_positions[color]
-                             ), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                            (255, 255, 255), 2)
-
+                            (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6, (255, 255, 255), 2)
+    
             if pixel_ratio > 0.1:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
-
+    
                 if self.debug_mode:
                     cv2.putText(frame_rgb, f"TURN DETECTED: {turn_detected}",
-                                (10, frame_rgb.shape[0] -
-                                 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                                (0, 255, 255), 2)
-
+                                (10, frame_rgb.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.8, (0, 255, 255), 2)
+    
                 return turn_detected
+
 
         return None
 
