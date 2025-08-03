@@ -16,10 +16,6 @@
 #include "core/TOFSensor.h"
 #include "core/SerialCommunicator.h"
 
-
-
-
-
 Servo servo;
 Button button(BUTTON_PIN);
 // Instantiate objects specifically for testing
@@ -28,7 +24,7 @@ Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
 Encoder encoder;
-TOFSensor frontSensor(SHT_LOX, 0x20);
+TOFSensor tof(SHT_LOX, 0x20);
 /**
  * @brief A simple blocking wait function, an alternative to delay().
  * Prints a message to the serial monitor.
@@ -50,27 +46,36 @@ void wait(unsigned long duration_ms, const char *message = "")
 
 void test_TOF()
 {
-  button.waitForPress("TOF Test (10 seconds)");
-  
-  while (!Serial) delay(1);
+  button.waitForPress("TOF Test (100 seconds)");
 
-    Serial.println("Starting TOF Sensor...");
+  while (!Serial)
+    delay(1);
 
-    if (!frontSensor.begin()) {
-        Serial.println("Sensor failed to init!");
-        while (1);
-    }
+  Serial.println("Starting TOF Sensor...");
 
-    Serial.println("TOF sensor initialized.");
-    Timer timer;
-    timer.start(10000);
-    while(!timer.isFinished()){
-    uint16_t dist = frontSensor.readDistance();
+  if (!tof.begin())
+  {
+    Serial.println("Sensor failed to init!");
+    while (1)
+      ;
+  }
+
+  Serial.println("TOF sensor initialized.");
+  Timer timer;
+  timer.start(100000);
+  while (!timer.isFinished())
+  {
+    tof.update();
+    uint16_t dist = tof.getDistance();
     Serial.print(millis() / 1000.0);
     Serial.print("s\t");
     Serial.print("Distance: ");
     Serial.print(dist);
-    Serial.println(" mm");}
+    Serial.println(" mm");
+
+    if (dist < 3000)
+      Serial.print("________________________WROOOONGGGG DIST_________________________");
+  }
 }
 void test_wire()
 {
@@ -127,12 +132,14 @@ void test_encoder()
   button.waitForPress("encoder Test (10 seconds)");
   Wire.begin();
 
-  if (!encoder.begin()) {
+  if (!encoder.begin())
+  {
     Serial.println("Encoder not detected!");
-    while (1);
+    while (1)
+      ;
   }
 
-  unsigned long startTime = millis(); 
+  unsigned long startTime = millis();
   while (millis() - startTime < 10000)
   {
     testMotors.forward(FORWARD_SPEED);
@@ -148,7 +155,7 @@ void test_encoder()
 
 void test_steering()
 {
- button.waitForPress("Steering Test");
+  button.waitForPress("Steering Test");
   testSteering.setup();
 
   Serial.println("Turning LEFT...");
@@ -257,20 +264,22 @@ void test_pid_controller()
   }
 }
 
-void test_serial_comm() {
+void test_serial_comm()
+{
   button.waitForPress("Serial Communication Test (10 seconds)");
 
   SerialCommunicator communicator;
   communicator.clearSerialBuffer();
-  
+
   Serial.println("Listening for serial commands from Raspberry Pi...");
   Serial.println("Send 5-byte packets: ['A' or 'T'] [val1 LSB] [val1 MSB] [val2 LSB] [val2 MSB]");
 
   Timer timer;
-  timer.start(10000);  // 10 seconds
-  while (!timer.isFinished()) {
+  timer.start(10000); // 10 seconds
+  while (!timer.isFinished())
+  {
     communicator.update();
-    delay(100);  // Slight delay to avoid spamming
+    delay(100); // Slight delay to avoid spamming
   }
 
   Serial.println("Serial communication test complete.");
@@ -282,7 +291,6 @@ void test_turn()
   myCar.setup();
   button.waitForPress("Turn 90");
   myCar._turn(90);
-  
 }
 
 void runHardwareTests()

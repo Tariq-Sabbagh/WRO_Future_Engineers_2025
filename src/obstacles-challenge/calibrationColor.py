@@ -69,6 +69,7 @@ def video_feed():
             frame = picam2.capture_array()
             frame = cv2.flip(frame, -1)
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+            lab = cv2.GaussianBlur(lab, (7, 7), 0)
             l, a, b = cv2.split(lab)
 
             # Apply CLAHE to L channel to normalize lighting

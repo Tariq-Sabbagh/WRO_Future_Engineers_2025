@@ -20,27 +20,30 @@ class ObstacleDetector:
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.turn_cooldown = 7   # seconds to wait before detecting a new turn
         self.movedPoint = 5
+        self.first_turn_detected = False
+        self.persistent_turn_direction = None
+
 
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 161, 0]),
-                'upper': np.array([255, 255, 174]),
+                'lower': np.array([0, 143, 0]),
+                'upper': np.array([255, 255, 105]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 113, 255]),
+                'lower': np.array([0, 87, 141]),
+                'upper': np.array([255, 111, 255]),
                 'offset_adjust': -20
             },
             'orange': {
                 'lower': np.array([0, 0, 0]),
-                'upper': np.array([145, 135, 108]),
+                'upper': np.array([255, 136, 104]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([54, 128, 139]),
-                'upper': np.array([255, 255, 255]),
+                'lower': np.array([0, 134, 101]),
+                'upper': np.array([155, 255, 255]),
                 'offset_adjust': -90
             }
         }
@@ -173,10 +176,11 @@ class ObstacleDetector:
         
 
         # Annotate frame for visualization
-        info_text = f"{color_type.upper()}: {distance:.1f}cm, {turn_angle:.1f}deg"
-        cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame_rgb, info_text, (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        if self.debug_mode:
+            info_text = f"{color_type.upper()}: {distance:.1f}cm, {turn_angle:.1f}deg"
+            cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(frame_rgb, info_text, (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
         if not self.debug_mode and travel_dist <= 70:
@@ -231,6 +235,7 @@ class ObstacleDetector:
         # Match calibration preprocessing
         frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
         lab = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2LAB)
+        lab = cv2.GaussianBlur(lab, (7, 7), 0)
         l, a, b = cv2.split(lab)
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
         cl = clahe.apply(l)
@@ -269,9 +274,9 @@ class ObstacleDetector:
         roi_bottom = min(roi_top + roi_height, height)
 
         # Debug visualization
-        
-        cv2.rectangle(frame, (roi_left, roi_top),
-                        (roi_right, roi_bottom), (255, 255, 0), 2)
+        if self.debug_mode:
+            cv2.rectangle(frame, (roi_left, roi_top),
+                            (roi_right, roi_bottom), (255, 255, 0), 2)
 
         return frame[roi_top:roi_bottom, roi_left:roi_right]
 
@@ -316,7 +321,7 @@ class ObstacleDetector:
                             (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (255, 255, 255), 2)
     
-            if pixel_ratio > 0.1:
+            if pixel_ratio > 0.05:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
     
@@ -331,23 +336,36 @@ class ObstacleDetector:
         return None
 
     def handle_turn_detection(self, frame_rgb):
-        """Detect turn based on stripes and apply cooldown"""
+        """Detect first turn based on color, then persist that direction."""
         current_time = time.time()
-        if (current_time - self.last_turn_time) < self.turn_cooldown and not self.debug_mode:
-            return  # Still cooling down
-        direction = self.detect_turn(frame_rgb)
-        if direction:
-            angle = -90 if direction == 'LEFT' else 90
-            if not self.debug_mode:
-                self.send_command('TURN', angle)
-            self.last_turn_time = current_time
 
-    def process_frame(self):
+        # If cooling down, skip detection unless in debug mode
+        if (current_time - self.last_turn_time) < self.turn_cooldown and not self.debug_mode:
+            return
+
+        direction = self.detect_turn(frame_rgb)
+        if not self.first_turn_detected:
+            if direction:
+                # Store the first detected direction
+                self.persistent_turn_direction = direction
+                self.first_turn_detected = True
+                print(f"First turn direction locked: {direction}")
+                
+        else:
+            if direction:
+                direction = self.persistent_turn_direction
+                angle = -90 if direction == 'LEFT' else 90
+                if not self.debug_mode:
+                    self.send_command('TURN', angle)
+                self.last_turn_time = current_time
+
+
+    def process_frame(self , mode='rgb'):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
         
         time_since_turn = time.time() - self.last_turn_time
-        in_turn_cooldown = time_since_turn  + 3 < self.turn_cooldown
+        in_turn_cooldown = time_since_turn  + 2 < self.turn_cooldown
 
         if in_turn_cooldown:
         # Shrink the ROI to avoid false positives
@@ -368,7 +386,15 @@ class ObstacleDetector:
 
         self.handle_turn_detection(frame_rgb)
 
-        return frame_rgb
+        if mode == 'mask':
+            lab_frame = cv2.cvtColor(cv2.cvtColor(obstacle_roi_rgb, cv2.COLOR_RGB2BGR), cv2.COLOR_BGR2LAB)
+            red_mask = self.detect_color(lab_frame, 'red')
+            green_mask = self.detect_color(lab_frame, 'green')
+            combined_mask = cv2.bitwise_or(red_mask, green_mask)
+            return cv2.cvtColor(combined_mask, cv2.COLOR_GRAY2BGR)  # Convert to 3-channel for display
+        else:
+            return frame_rgb
+
 
     def run_processing_loop(self):
         """Main processing loop for production"""
@@ -391,14 +417,14 @@ class ObstacleDetector:
 # Web Application (Debugging Only)
 # =================================================================
 def create_flask_app(detector):
-    from flask import Flask, Response
+    from flask import Flask, Response,request
 
     app = Flask(__name__)
 
-    def generate_frames():
+    def generate_frames(mode='rgb'):
         """Video streaming generator for debugging"""
         while True:
-            frame = detector.process_frame()
+            frame = detector.process_frame(mode=mode)
             success, encoded_frame = cv2.imencode(".jpg", frame)
             if success:
                 yield (b'--frame\r\n'
@@ -408,8 +434,9 @@ def create_flask_app(detector):
 
     @app.route('/video_feed')
     def video_feed():
-        return Response(generate_frames(),
-                        mimetype='multipart/x-mixed-replace; boundary=frame')
+        mode = request.args.get('mode', 'rgb')
+        return Response(generate_frames(mode),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
     @app.route('/')
     def index():

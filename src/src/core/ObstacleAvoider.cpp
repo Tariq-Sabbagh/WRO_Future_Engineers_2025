@@ -52,6 +52,7 @@ void ObstacleAvoider::loop()
     _encoder.update();
     _imu.update();
     _comm.update();
+    _backSensor.update();
     if (_comm.getTurn() != 0.f)
     {
         _currentState = TURN;
@@ -117,13 +118,9 @@ void ObstacleAvoider::_resetCar()
     _steeringAngle = correction;
     _motors.move(-FORWARD_SPEED);
     // Serial.println(_backSensor.readDistance());
-    int distanceTOF = _backSensor.readDistance();
-    // Serial.println(distanceTOF);
-    if (distanceTOF > 8000)
-    {
-        distanceTOF = 0;
-    }
-    if (distanceTOF <= 300 and distanceTOF > 0)
+    int distanceTOF = _backSensor.getDistance();
+    
+    if (distanceTOF <= 300 and distanceTOF > 0 and _pid.geterror()< abs(25))
     {
         count_turn++;
         _currentState = FORWARD;
