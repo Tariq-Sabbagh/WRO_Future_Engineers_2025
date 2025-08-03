@@ -34,9 +34,11 @@ void ObstacleAvoider::setup()
 
     Serial.println("Starting TOF Sensor...");
 
-    if (!_backSensor.begin()) {
+    if (!_backSensor.begin())
+    {
         Serial.println("Sensor failed to init!");
-        while (1);
+        while (1)
+            ;
     }
     _button.waitForPress();
 
@@ -77,9 +79,9 @@ void ObstacleAvoider::loop()
     case RESET:
         _resetCar();
         break;
-    // case BACKWARD:
-    //     _goBackward();
-    //     break;
+        // case BACKWARD:
+        //     _goBackward();
+        //     break;
     }
     _get_away_walls();
     if (count_turn >= 50)
@@ -119,8 +121,8 @@ void ObstacleAvoider::_resetCar()
     _motors.move(-FORWARD_SPEED);
     // Serial.println(_backSensor.readDistance());
     int distanceTOF = _backSensor.getDistance();
-    
-    if (distanceTOF <= 300 and distanceTOF > 0 and _pid.geterror()< abs(25))
+
+    if (distanceTOF <= 300 )
     {
         count_turn++;
         _currentState = FORWARD;
@@ -139,7 +141,7 @@ void ObstacleAvoider::_avoidObstacle()
     //     _currentState = BACKWARD;
     //     return;
     // }
-    
+
     if (abs(currentDistance) <= distance)
     {
         correction = _pid.compute(angle, currentHeading);
@@ -151,7 +153,7 @@ void ObstacleAvoider::_avoidObstacle()
         _comm.resetManeuverValues();
         // _timer.start(200);
         // _currentState = IDLE;
-        Serial.println("Out obs_________");
+        Serial.println("Done avoiding_________");
         _currentState = FORWARD;
     }
 }
@@ -159,11 +161,11 @@ void ObstacleAvoider::_turn()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = -correction;
+    _motors.move(FORWARD_SPEED - 45);
     // Serial.println(_pid.geterror());
-    if(_ultra.getFrontCm() <= 20 and _pid.geterror() < abs(5))
+    if (_ultra.getFrontCm() <= 35 and _pid.geterror() < abs(15))
     {
-        // Serial.println(_comm.getTurn());
-        _forwardTarget+=_comm.getTurn();
+        _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
         _currentState = RESET;
     }
@@ -191,7 +193,7 @@ void ObstacleAvoider::_goForward()
         _encoder.reset();
         _imu.reset();
         _currentState = AVOIDING;
-        Serial.println("in Obst_____________");
+        Serial.println("Started Avoiding_____________");
     }
     else
     {

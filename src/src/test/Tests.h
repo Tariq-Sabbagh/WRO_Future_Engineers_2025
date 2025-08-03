@@ -300,11 +300,11 @@ void runHardwareTests()
 
   // test_motors();
   // test_steering();
-  // test_distance_sensors();
+  test_distance_sensors();
   // test_wire();
   // test_imu();
   // test_encoder();
-  test_TOF();
+  // test_TOF();
   // test_turn();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");

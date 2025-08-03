@@ -5,10 +5,29 @@ import numpy as np
 import struct
 from picamera2 import Picamera2
 
+from enum import Enum
+
+class OperationMode(Enum):
+    HEADLESS = 'headless'         # No camera stream, just Arduino logic
+    CAMERA_ONLY = 'camera_only'   # Camera stream only, no Arduino
+    FULL = 'full'                 # Camera + Arduino
+    
+class Cooldown:
+    def __init__(self, cooldown_time: float):
+        self.cooldown_time = cooldown_time
+        self.last_triggered = 0.0
+
+    def ready(self) -> bool:
+        return (time.time() - self.last_triggered) >= self.cooldown_time
+
+    def reset(self):
+        self.last_triggered = time.time()
+
 
 class ObstacleDetector:
-    def __init__(self, debug_mode=False, serial_port='/dev/ttyUSB0'):
+    def __init__(self, mode=OperationMode.HEADLESS, serial_port='/dev/ttyUSB0'):
         # Configuration
+        self.mode = mode
         self.SERIAL_PORT = serial_port
         self.BAUDRATE = 115200
         self.CALIBRATION_FILE = "calibration_data.npz"
@@ -16,9 +35,10 @@ class ObstacleDetector:
         self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
         self.FOCAL_LENGTH = 570.0
         self.MAX_AREA = 3000.0
-        self.debug_mode = debug_mode  # True = debugging, False = production
         self.last_turn_time = 0  # timestamp of the last detected turn
-        self.turn_cooldown = 7   # seconds to wait before detecting a new turn
+        self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
+        self.turn_detection_cooldown = Cooldown(6.0)
+        self.wide_roi_cooldown = Cooldown(3.0)
         self.movedPoint = 5
         self.first_turn_detected = False
         self.persistent_turn_direction = None
@@ -57,7 +77,7 @@ class ObstacleDetector:
         self.load_calibration()
 
         # Only initialize serial in production mode
-        if not self.debug_mode:
+        if self.mode is not OperationMode.CAMERA_ONLY:
             self.initialize_serial()
 
     def load_calibration(self):
@@ -176,14 +196,14 @@ class ObstacleDetector:
         
 
         # Annotate frame for visualization
-        if self.debug_mode:
+        if self.mode is not OperationMode.HEADLESS:
             info_text = f"{color_type.upper()}: {distance:.1f}cm, {turn_angle:.1f}deg"
             cv2.rectangle(frame_rgb, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(frame_rgb, info_text, (x, y - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if not self.debug_mode and travel_dist <= 70:
+        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 70:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
@@ -227,6 +247,21 @@ class ObstacleDetector:
         """Capture and prepare a frame from camera"""
         frame = self.picam2.capture_array()
         frame = cv2.flip(frame, -1)
+        # h, w = frame.shape[:2]
+
+        # # Replace these with your actual calibration values:
+        # K = np.array([[800, 0, w/2],
+        #             [0, 800, h/2],
+        #             [0, 0, 1]])  # fx, fy, cx, cy (example values)
+
+        # D = np.array([-0.25, 0.1, 0, 0, 0])  # k1, k2, p1, p2, k3 (example values)
+
+        # # Get optimal camera matrix
+        # new_K, roi = cv2.getOptimalNewCameraMatrix(K, D, (w, h), alpha=0)
+
+        # # Undistort
+        # frame = cv2.undistort(frame, K, D, None, new_K)
+
         return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     def detect_obstacles(self, frame_rgb):
@@ -273,8 +308,7 @@ class ObstacleDetector:
         roi_right = min(roi_left + roi_width, width)
         roi_bottom = min(roi_top + roi_height, height)
 
-        # Debug visualization
-        if self.debug_mode:
+        if self.mode is not OperationMode.HEADLESS:
             cv2.rectangle(frame, (roi_left, roi_top),
                             (roi_right, roi_bottom), (255, 255, 0), 2)
 
@@ -316,7 +350,7 @@ class ObstacleDetector:
             mask = self.detect_color(frame_lab, color)
             pixel_ratio = np.sum(mask > 0) / mask.size
     
-            if self.debug_mode:
+            if self.mode is not OperationMode.HEADLESS:
                 cv2.putText(frame_rgb, f"{color.upper()} RATIO: {pixel_ratio:.2f}",
                             (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (255, 255, 255), 2)
@@ -325,7 +359,7 @@ class ObstacleDetector:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
     
-                if self.debug_mode:
+                if self.mode is not OperationMode.HEADLESS:
                     cv2.putText(frame_rgb, f"TURN DETECTED: {turn_detected}",
                                 (10, frame_rgb.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.8, (0, 255, 255), 2)
@@ -337,10 +371,8 @@ class ObstacleDetector:
 
     def handle_turn_detection(self, frame_rgb):
         """Detect first turn based on color, then persist that direction."""
-        current_time = time.time()
-
         # If cooling down, skip detection unless in debug mode
-        if (current_time - self.last_turn_time) < self.turn_cooldown and not self.debug_mode:
+        if not self.turn_detection_cooldown.ready() and self.mode is not OperationMode.CAMERA_ONLY:
             return
 
         direction = self.detect_turn(frame_rgb)
@@ -355,24 +387,22 @@ class ObstacleDetector:
             if direction:
                 direction = self.persistent_turn_direction
                 angle = -90 if direction == 'LEFT' else 90
-                if not self.debug_mode:
+                if self.mode is not OperationMode.CAMERA_ONLY:
                     self.send_command('TURN', angle)
-                self.last_turn_time = current_time
+                self.turn_detection_cooldown.reset()
+                self.wide_roi_cooldown.reset()
 
 
     def process_frame(self , mode='rgb'):
         """Process a single frame"""
         frame_rgb = self.capture_frame()
         
-        time_since_turn = time.time() - self.last_turn_time
-        in_turn_cooldown = time_since_turn  + 2 < self.turn_cooldown
-
-        if in_turn_cooldown:
+        if not self.wide_roi_cooldown.ready():
         # Shrink the ROI to avoid false positives
             obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.25, 0.5, 0.55)
         else:
         # Full-size ROI
-            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.25, 0.8, 0.55)
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.15, 0.8, 0.7)
 
         contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
@@ -482,44 +512,34 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Obstacle Detection System')
-    parser.add_argument('--web', action='store_true',
-                        help='Enable web interface (debugging only)')
+    parser.add_argument('--mode', type=str, choices=['headless', 'camera_only', 'full'], default='headless',
+                        help='Operation mode: headless, camera_only, or full')
     parser.add_argument('--serial', type=str, default='/dev/ttyUSB0',
                         help='Specify serial port (default: /dev/ttyUSB0)')
-    parser.add_argument('--both', action='store_true',
-                        help='Enable both video stream and serial communication')
     args = parser.parse_args()
 
 
     # Create detector with serial port override
-    # detector = ObstacleDetector(debug_mode=args.web, serial_port=args.serial)
-    
-    if args.web:
-        detector = ObstacleDetector(debug_mode=True, serial_port=args.serial)
-    elif args.both:
-        detector = ObstacleDetector(debug_mode=False, serial_port=args.serial)
-    else:
-        detector = ObstacleDetector(debug_mode=False, serial_port=args.serial)
+    mode_enum = OperationMode(args.mode)
+    detector = ObstacleDetector(mode=mode_enum, serial_port=args.serial)
 
-    if args.web:
-        print("Starting web server in DEBUG MODE (no serial)...")
+    if mode_enum == OperationMode.CAMERA_ONLY:
+        print("Starting web server (CAMERA_ONLY mode)...")
         app = create_flask_app(detector)
         app.run(host='0.0.0.0', port=8080, threaded=True)
-    elif args.both:
-        print("Starting web server in COMBINED MODE (serial + video)...")
+    elif mode_enum == OperationMode.FULL:
+        print("Starting in FULL mode (video + Arduino)...")
         app = create_flask_app(detector)
 
-        # Run video + serial in a separate thread
         import threading
-
         def processing_loop():
             detector.run_processing_loop()
-
         t = threading.Thread(target=processing_loop)
         t.daemon = True
         t.start()
 
         app.run(host='0.0.0.0', port=8080, threaded=True)
     else:
-        print("Running in PRODUCTION MODE: Commands will be sent to Arduino (no video)")
+        print("Running in HEADLESS mode: Arduino communication only (no video)")
         detector.run_processing_loop()
+

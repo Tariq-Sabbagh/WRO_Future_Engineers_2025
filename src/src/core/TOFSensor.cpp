@@ -26,6 +26,9 @@ bool TOFSensor::begin()
 
 void TOFSensor::update()
 {
+}
+uint16_t TOFSensor::getDistance(){
+    
     _lox.rangingTest(&_measure, false);
 
     uint16_t rawDistance;
@@ -56,8 +59,6 @@ void TOFSensor::update()
     }
 
     _avgDistance = sum / count;
-}
-uint16_t TOFSensor::getDistance(){
     return  _avgDistance;
 }
 bool TOFSensor::isOutOfRange()
