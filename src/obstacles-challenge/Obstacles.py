@@ -38,7 +38,7 @@ class ObstacleDetector:
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
         self.turn_detection_cooldown = Cooldown(6.0)
-        self.wide_roi_cooldown = Cooldown(3.0)
+        self.wide_roi_cooldown = Cooldown(4.0)
         self.movedPoint = 5
         self.first_turn_detected = False
         self.persistent_turn_direction = None
@@ -47,8 +47,8 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 143, 0]),
-                'upper': np.array([255, 255, 105]),
+                'lower': np.array([0, 140, 0]),
+                'upper': np.array([255, 255, 150]),
                 'offset_adjust': 20
             },
             'green': {
@@ -58,12 +58,12 @@ class ObstacleDetector:
             },
             'orange': {
                 'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 136, 104]),
+                'upper': np.array([255, 136, 103]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 134, 101]),
-                'upper': np.array([155, 255, 255]),
+                'lower': np.array([0, 127, 132]),
+                'upper': np.array([255, 255, 174]),
                 'offset_adjust': -90
             }
         }
@@ -112,6 +112,7 @@ class ObstacleDetector:
         self.picam2.configure(config)
         self.picam2.set_controls({"ExposureTime": 10000})
         self.picam2.start()
+        
         print("Camera initialized.")
 
     def initialize_serial(self):
@@ -137,6 +138,41 @@ class ObstacleDetector:
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
+    
+    def calculate_black_ratio(self, roi_rgb):
+        lab = cv2.cvtColor(np.array(roi_rgb), cv2.COLOR_RGB2LAB)
+        lab = cv2.GaussianBlur( lab, (5, 5), 0)
+
+        black_mask = self.detect_black(lab)
+        black_pixels = np.sum(black_mask > 0)
+        total_pixels = black_mask.size
+
+        return black_pixels / total_pixels if total_pixels else 0
+
+    
+    def detect_black(self, lab_frame, l_thresh=60):
+        L, A, B = cv2.split(lab_frame)
+        _, black_mask = cv2.threshold(L, l_thresh, 255, cv2.THRESH_BINARY_INV)
+        return black_mask
+
+    def extract_center_vertical_roi(self, frame_rgb, width_ratio=0.1, height_ratio=0.7):
+        height, width, _ = frame_rgb.shape
+        roi_width = int(width * width_ratio)
+        roi_height = int(height * height_ratio)
+
+        x_start = (width - roi_width) // 2
+        y_start = (height - roi_height) // 2 
+
+        x_end = x_start + roi_width
+        y_end = y_start + roi_height
+
+        roi = frame_rgb[y_start:y_end, x_start:x_end]
+
+        if self.mode != OperationMode.HEADLESS:
+            cv2.rectangle(frame_rgb, (x_start, y_start), (x_end, y_end), (0, 0, 255), 2)
+
+        return roi
+
 
     def find_largest_contour(self, mask, min_area=3000):
         """Find largest valid contour in mask"""
@@ -193,7 +229,12 @@ class ObstacleDetector:
             frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
         )
 
-        
+        center_roi = self.extract_center_vertical_roi(frame_rgb)
+        black_ratio = self.calculate_black_ratio(center_roi)
+
+        if self.mode != OperationMode.HEADLESS:
+            cv2.putText(frame_rgb, f"Black Ratio: {black_ratio:.2f}",
+                        (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         # Annotate frame for visualization
         if self.mode is not OperationMode.HEADLESS:
@@ -203,7 +244,7 @@ class ObstacleDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 70:
+        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 60 and black_ratio <= 0.13:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
@@ -397,6 +438,8 @@ class ObstacleDetector:
         """Process a single frame"""
         frame_rgb = self.capture_frame()
         
+        
+        
         if not self.wide_roi_cooldown.ready():
         # Shrink the ROI to avoid false positives
             obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.25, 0.5, 0.55)
@@ -404,6 +447,8 @@ class ObstacleDetector:
         # Full-size ROI
             obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.15, 0.8, 0.7)
 
+        self.handle_turn_detection(frame_rgb)
+        
         contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)
 
@@ -414,7 +459,6 @@ class ObstacleDetector:
                 dominant_color
             )
 
-        self.handle_turn_detection(frame_rgb)
 
         if mode == 'mask':
             lab_frame = cv2.cvtColor(cv2.cvtColor(obstacle_roi_rgb, cv2.COLOR_RGB2BGR), cv2.COLOR_BGR2LAB)

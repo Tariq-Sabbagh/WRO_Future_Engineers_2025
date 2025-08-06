@@ -119,7 +119,7 @@ void ObstacleAvoider::_resetCar()
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = correction;
     _motors.move(-FORWARD_SPEED);
-    // Serial.println(_backSensor.readDistance());
+    // Serial.println("in reset_________________");
     int distanceTOF = _backSensor.getDistance();
 
     if (distanceTOF <= 300 )
@@ -133,15 +133,14 @@ void ObstacleAvoider::_avoidObstacle()
     float correction = 0;
     float currentHeading = _imu.getHeading();
     float currentDistance = _encoder.getDistanceCm();
-    // if (distance <= 40.0) // too close to move forward
-    // {
-    //     Serial.println("Too close — backing up");
-    //     _encoder.reset();
-    //     _backwardTarget = 10.0; // back up 20 cm
-    //     _currentState = BACKWARD;
-    //     return;
-    // }
-
+    float dis = distance * sin(angle);
+    float left = _ultra.getLeftCm();
+    float checkdis = 100 - left ;
+    if (dis  > checkdis)
+    {
+         _currentState = FORWARD;
+    }
+    else{
     if (abs(currentDistance) <= distance)
     {
         correction = _pid.compute(angle, currentHeading);
@@ -151,20 +150,19 @@ void ObstacleAvoider::_avoidObstacle()
     else
     {
         _comm.resetManeuverValues();
-        // _timer.start(200);
-        // _currentState = IDLE;
         Serial.println("Done avoiding_________");
         _currentState = FORWARD;
     }
+}
 }
 void ObstacleAvoider::_turn()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = -correction;
-    _motors.move(FORWARD_SPEED - 45);
-    // Serial.println(_pid.geterror());
-    if (_ultra.getFrontCm() <= 35 and _pid.geterror() < abs(15))
+
+    if (_ultra.getFrontCm() <= 35 and _pid.geterror() < abs(20))
     {
+        Serial.println(_pid.geterror());
         _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
         _currentState = RESET;
