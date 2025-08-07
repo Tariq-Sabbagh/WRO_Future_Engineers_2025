@@ -149,7 +149,7 @@ bool Car::_empty_on_left()
 
 void Car::_stopAndHalt()
 {
-    _motors.stop();
+    _motors.stop(0);
     _steering.center();
     Serial.println("Execution halted after completing course.");
     while (true)

@@ -13,6 +13,7 @@
 #include "Timer.h"
 #include "core/DistanceSensors.h"
 #include "core/TOFSensor.h"
+#include "core/Garage.h"
 
 
 class ObstacleAvoider
@@ -21,6 +22,7 @@ public:
     ObstacleAvoider();
     void setup();
     void loop();
+   
 
 private:
     // Components
@@ -34,6 +36,7 @@ private:
     Timer _timer;
     DistanceSensors _ultra;
     TOFSensor _backSensor;
+    Garage _garage;
     float _steeringAngle;
     float _backwardTarget;
 
@@ -59,6 +62,8 @@ private:
     void _get_away_walls();
     void _turn();
     void _resetCar();
+    void _garageDoOut();
+    void _garageDoIn();
 };
 
 #endif // OBSTACLE_AVOIDER_H

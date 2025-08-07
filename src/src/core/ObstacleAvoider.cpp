@@ -9,6 +9,7 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _timer(),
                                      _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
                                      _backSensor(SHT_LOX, 0x20),
+                                     _garage(),
                                      _comm() // Initialize the communicator
 {
     _currentState = FORWARD;
@@ -23,8 +24,8 @@ void ObstacleAvoider::setup()
     _servo.setup();
     _button.setup();
     _encoder.begin();
-    while (!Serial)
-        ; // Wait for serial monitor to open (remove for production)
+    // while (!Serial)
+    //     ; // Wait for serial monitor to open (remove for production)
     Serial.println("ESP32 Ready");
     if (!_imu.setup())
     {
@@ -46,6 +47,8 @@ void ObstacleAvoider::setup()
     _pid.setOutputLimits(-90, 90);
 
     _comm.clearSerialBuffer();
+    // _garageDoIn();
+
     Serial.println("Obstacle Avoider Initialized. Waiting for commands...");
 }
 
@@ -86,12 +89,126 @@ void ObstacleAvoider::loop()
     _get_away_walls();
     if (count_turn >= 50)
     {
-        _motors.stop();
+        _motors.stop(0);
         while (true)
             ;
     }
     // Serial.println(_steeringAngle);
     _servo.setAngle(_steeringAngle);
+}
+
+void ObstacleAvoider::_garageDoOut()
+{ // Minimum time between turns.
+
+    char diriction;
+    int number_of_turns = 0;
+    int max_servo_Angle = 90;
+    int min_servo_Angle = -90;
+
+    if (_ultra.getLeftCm() < _ultra.getRightCm())
+    {
+        max_servo_Angle = -max_servo_Angle;
+        min_servo_Angle = -min_servo_Angle;
+    }
+
+    _imu.reset();
+
+    delay(500);
+    Serial.println(_backSensor.getDistance());
+    Serial.println(_encoder.getDistanceCm());
+    while (_backSensor.getDistance() > 120)
+    {
+        _motors.backward(FORWARD_SPEED * 0.8);
+    }
+    _motors.stop(1);
+    // _servo.setAngle(MAX_SERVO_ANGLE);
+    Serial.println(_imu.getHeading());
+    while (number_of_turns < 2)
+    {
+
+        delay(500);
+        _encoder.reset();
+        _encoder.update();
+
+        while (_backSensor.getDistance() < 90 || abs(_encoder.getDistanceCm()) < 3)
+        {
+            _servo.setAngle(max_servo_Angle);
+
+            _motors.forward(FORWARD_SPEED);
+            _encoder.update();
+        }
+        _motors.stop(-1);
+        // _button.waitForPress();
+        delay(500);
+        _encoder.reset();
+        _encoder.update();
+
+        _motors.move(-FORWARD_SPEED * 0.8);
+        if (number_of_turns < 1)
+        {
+            while (abs(_encoder.getDistanceCm()) < 4)
+            {
+                _servo.setAngle(min_servo_Angle);
+
+                _encoder.update();
+            }
+        }
+        _motors.stop(1);
+        number_of_turns++;
+    }
+    _encoder.reset();
+    _encoder.update();
+
+    while (abs(_encoder.getDistanceCm()) < 10)
+    {
+        _servo.setAngle(0);
+
+        _motors.forward(FORWARD_SPEED * 0.95);
+        _encoder.update();
+    }
+    // float correction = _pid.compute(90, _imu.getHeadingRotating());
+    // Serial.println(_imu.getHeadingRotating());
+}
+
+void ObstacleAvoider::_garageDoIn()
+{
+    int max_servo_Angle = 90;
+    int min_servo_Angle = -90;
+
+    _encoder.reset();
+    _encoder.update();
+
+    while (abs(_encoder.getDistanceCm()) < 4)
+    {
+        _servo.setAngle(0);
+
+        _motors.forward(FORWARD_SPEED * 0.8);
+        _encoder.update();
+    }
+    Serial.println(_imu.getHeading());
+
+    _motors.stop(-1);
+
+    while (_imu.getHeading() < 85||_imu.getHeading() >355)
+    {
+        _servo.setAngle(min_servo_Angle);
+        // _servo.setAngle(min_servo_Angle);
+        _motors.forward(FORWARD_SPEED * 0.8);
+    }
+    _motors.stop(-1);
+
+    _servo.setAngle(0);
+    delay(500);
+
+    while (_backSensor.getDistance() > 20)
+    {
+        _motors.backward(FORWARD_SPEED * 0.8);
+    }
+
+    _motors.stop(-1);
+
+    _servo.setAngle(0);
+    delay(500);
 }
 void ObstacleAvoider::_get_away_walls()
 {
@@ -109,7 +226,7 @@ void ObstacleAvoider::_get_away_walls()
 }
 void ObstacleAvoider::_stopUntilTimer()
 {
-    _motors.stop();
+    _motors.stop(0);
     if (_timer.isFinished())
         _currentState = FORWARD;
 }
@@ -122,7 +239,7 @@ void ObstacleAvoider::_resetCar()
     // Serial.println("in reset_________________");
     int distanceTOF = _backSensor.getDistance();
 
-    if (distanceTOF <= 300 )
+    if (distanceTOF <= 300)
     {
         count_turn++;
         _currentState = FORWARD;
@@ -135,25 +252,26 @@ void ObstacleAvoider::_avoidObstacle()
     float currentDistance = _encoder.getDistanceCm();
     float dis = distance * sin(angle);
     float left = _ultra.getLeftCm();
-    float checkdis = 100 - left ;
-    if (dis  > checkdis)
+    float checkdis = 100 - left;
+    if (dis > checkdis)
     {
-         _currentState = FORWARD;
-    }
-    else{
-    if (abs(currentDistance) <= distance)
-    {
-        correction = _pid.compute(angle, currentHeading);
-        _steeringAngle = -correction;
-        _motors.forward(FORWARD_SPEED);
+        _currentState = FORWARD;
     }
     else
     {
-        _comm.resetManeuverValues();
-        Serial.println("Done avoiding_________");
-        _currentState = FORWARD;
+        if (abs(currentDistance) <= distance)
+        {
+            correction = _pid.compute(angle, currentHeading);
+            _steeringAngle = -correction;
+            _motors.forward(FORWARD_SPEED);
+        }
+        else
+        {
+            _comm.resetManeuverValues();
+            Serial.println("Done avoiding_________");
+            _currentState = FORWARD;
+        }
     }
-}
 }
 void ObstacleAvoider::_turn()
 {
@@ -203,7 +321,7 @@ void ObstacleAvoider::_goForward()
 
 void ObstacleAvoider::_stopAndHalt()
 {
-    _motors.stop();
+    _motors.stop(0);
     _servo.center();
     Serial.println("Execution Halted.");
     while (true)

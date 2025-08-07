@@ -2,6 +2,7 @@
 #include <Wire.h> 
 
 #include "core/ObstacleAvoider.h"
+#include "core/Garage.h"
 
 #ifdef RUN_TESTS
   #include "test/Tests.h"
@@ -11,6 +12,7 @@
 Car myCar;
 
 ObstacleAvoider robot;
+// Garage garage;
 
 //==============================================================================
 // ARDUINO SETUP
@@ -18,7 +20,7 @@ ObstacleAvoider robot;
 void setup() {
   Serial.begin(115200);
   Serial.println("\n--- Modular Car Initializing ---");
-  Wire.begin();
+  // Wire.begin();
 
   #ifdef RUN_TESTS
     Serial.println("!!! RUNNING IN TEST MODE !!!");
@@ -26,19 +28,24 @@ void setup() {
   #else
     Serial.println("--- Running in Normal Operation Mode ---");
     // myCar.setup();
+    // garage.begin();
     robot.setup();
-  #endif
-}
+    // _garage.Do();
+    
+    Serial.println("finish");
 
-//==============================================================================
-// ARDUINO LOOP
-//==============================================================================
-void loop() {
-  #ifdef RUN_TESTS
+    #endif
+  }
+  
+  //==============================================================================
+  // ARDUINO LOOP
+  //==============================================================================
+  void loop() {
+    #ifdef RUN_TESTS
     // In test mode, all logic is in setup(), so the loop does nothing.
-  #else
+    #else
     // In normal mode, we run the car's main logic loop.
     // myCar.loop();
-    robot.loop();
+    // robot.loop();
   #endif
 }

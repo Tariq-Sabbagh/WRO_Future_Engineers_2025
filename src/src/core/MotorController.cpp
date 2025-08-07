@@ -12,7 +12,7 @@ void MotorController::setup() {
     pinMode(_dir1_pin, OUTPUT);
     pinMode(_dir2_pin, OUTPUT);
     pinMode(_speed_pin,OUTPUT);
-    stop(); // Ensure motors are off at start
+    stop(0); // Ensure motors are off at start
 }
 
 void MotorController::forward(int speed) {
@@ -35,7 +35,20 @@ void MotorController::move(int speed)
         backward(-speed);
 }
 
-void MotorController::stop() {
+void MotorController::stop(int diriction) {
+    if (diriction>0)
+{
+    forward(200);
+    delay(70);
+}
+else if (diriction <0)
+{
+    backward(200);
+    delay(70);
+}
+else{
+
+}
     digitalWrite(_dir1_pin, LOW);
     digitalWrite(_dir2_pin, LOW);
     analogWrite(_speed_pin, 0);
