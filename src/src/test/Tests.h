@@ -116,14 +116,14 @@ void test_motors()
   wait(2000, "Forward Motion");
 
   Serial.println("STOPPING...");
-  testMotors.stop(0);
+  testMotors.stop();
   wait(1000, "Brake");
 
   Serial.println("Moving BACKWARD...");
   testMotors.backward(FORWARD_SPEED);
   wait(2000, "Backward Motion");
 
-  testMotors.stop(0);
+  testMotors.stop();
   Serial.println("Motor test complete.");
 }
 
@@ -151,7 +151,7 @@ void test_encoder()
     delay(100); // adjust as needed
   }
 
-  testMotors.stop(1);
+  testMotors.stop();
 }
 
 void test_steering()

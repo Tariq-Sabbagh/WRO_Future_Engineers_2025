@@ -9,7 +9,7 @@
 #endif
 
 // Create our main car object
-Car myCar;
+// Car myCar;
 
 ObstacleAvoider robot;
 // Garage garage;

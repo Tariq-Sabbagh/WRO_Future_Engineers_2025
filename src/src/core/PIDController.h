@@ -15,5 +15,6 @@ private:
     float prevError;
     float integral;
     float outputMin, outputMax;
+    float error;
     unsigned long lastTime;
 };

@@ -47,12 +47,7 @@ void IMU::update() {
 
 float IMU::getHeading() {
     // return _heading;
-    sensors_event_t event;
-    _bno.getEvent(&event);
-
-    // Store current heading as offset
-    float rawHeading = event.orientation.x;
-    return rawHeading;
+    return _heading;
 }
 
 float IMU::getHeadingRotating() {

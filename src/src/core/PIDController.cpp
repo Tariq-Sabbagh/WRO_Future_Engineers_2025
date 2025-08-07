@@ -28,7 +28,7 @@ void PIDController::setOutputLimits(float min, float max) {
 
 float PIDController::geterror()
 {
-    return prevError;
+    return error;
 }
 
 void PIDController::reset() {
@@ -38,10 +38,12 @@ void PIDController::reset() {
 }
 
 float PIDController::compute(float setpoint, float input) {
+    
     unsigned long now = millis();
     float dt = (now - lastTime) / 1000.0;
 
-    float error = setpoint - input;
+    error = setpoint - input;
+    
     integral += error * dt;
     float derivative = (dt > 0) ? (error - prevError) / dt : 0.0;
 
