@@ -36,7 +36,6 @@ private:
     Timer _timer;
     DistanceSensors _ultra;
     TOFSensor _backSensor;
-    Garage _garage;
     float _steeringAngle;
     float _backwardTarget;
 

@@ -42,8 +42,7 @@ config = picam2.create_preview_configuration(
 picam2.configure(config)
 picam2.set_controls({"ExposureTime": 10000})
 picam2.start()
-picam2.set_controls({"AeEnable": True})
-time.sleep(2)  # Camera warm-up
+# time.sleep(2)  # Camera warm-up
 
 # Global LAB range dictionary
 lab_range = {

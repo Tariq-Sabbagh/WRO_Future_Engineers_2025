@@ -116,14 +116,14 @@ void test_motors()
   wait(2000, "Forward Motion");
 
   Serial.println("STOPPING...");
-  testMotors.stop();
+  testMotors.stop(0);
   wait(1000, "Brake");
 
   Serial.println("Moving BACKWARD...");
   testMotors.backward(FORWARD_SPEED);
   wait(2000, "Backward Motion");
 
-  testMotors.stop();
+  testMotors.stop(0);
   Serial.println("Motor test complete.");
 }
 
@@ -131,6 +131,7 @@ void test_encoder()
 {
   button.waitForPress("encoder Test (10 seconds)");
   Wire.begin();
+  testMotors.setup();
 
   if (!encoder.begin())
   {
@@ -140,7 +141,7 @@ void test_encoder()
   }
 
   unsigned long startTime = millis();
-  while (millis() - startTime < 10000)
+  while (abs(encoder.getDistanceCm()) < 100)
   {
     testMotors.forward(FORWARD_SPEED);
     encoder.update();
@@ -150,7 +151,7 @@ void test_encoder()
     delay(100); // adjust as needed
   }
 
-  testMotors.stop();
+  testMotors.stop(1);
 }
 
 void test_steering()
@@ -300,10 +301,10 @@ void runHardwareTests()
 
   // test_motors();
   // test_steering();
-  test_distance_sensors();
+  // test_distance_sensors();
   // test_wire();
   // test_imu();
-  // test_encoder();
+  test_encoder();
   // test_TOF();
   // test_turn();
 

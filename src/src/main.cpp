@@ -46,6 +46,6 @@ void setup() {
     #else
     // In normal mode, we run the car's main logic loop.
     // myCar.loop();
-    // robot.loop();
+    robot.loop();
   #endif
 }

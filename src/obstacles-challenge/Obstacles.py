@@ -47,23 +47,23 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 140, 0]),
-                'upper': np.array([255, 255, 150]),
+                'lower': np.array([0, 142, 0]),
+                'upper': np.array([255, 255, 130]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 87, 141]),
-                'upper': np.array([255, 111, 255]),
+                'lower': np.array([0, 0, 151]),
+                'upper': np.array([255, 120, 255]),
                 'offset_adjust': -20
             },
             'orange': {
                 'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 136, 103]),
+                'upper': np.array([131, 138, 100]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 127, 132]),
-                'upper': np.array([255, 255, 174]),
+                'lower': np.array([0, 137, 100]),
+                'upper': np.array([131, 247, 167]),
                 'offset_adjust': -90
             }
         }
@@ -229,12 +229,12 @@ class ObstacleDetector:
             frame_rgb.shape, (x, y, w, h), distance, profile['offset_adjust']
         )
 
-        center_roi = self.extract_center_vertical_roi(frame_rgb)
-        black_ratio = self.calculate_black_ratio(center_roi)
+        # center_roi = self.extract_center_vertical_roi(frame_rgb)
+        # black_ratio = self.calculate_black_ratio(center_roi)
 
-        if self.mode != OperationMode.HEADLESS:
-            cv2.putText(frame_rgb, f"Black Ratio: {black_ratio:.2f}",
-                        (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        # if self.mode != OperationMode.HEADLESS:
+        #     cv2.putText(frame_rgb, f"Black Ratio: {black_ratio:.2f}",
+        #                 (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         # Annotate frame for visualization
         if self.mode is not OperationMode.HEADLESS:
@@ -244,7 +244,7 @@ class ObstacleDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 60 and black_ratio <= 0.13:
+        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 60:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
@@ -396,7 +396,7 @@ class ObstacleDetector:
                             (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (255, 255, 255), 2)
     
-            if pixel_ratio > 0.05:
+            if pixel_ratio > 0.1:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
     
