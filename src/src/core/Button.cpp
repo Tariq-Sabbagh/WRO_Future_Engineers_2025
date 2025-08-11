@@ -9,7 +9,7 @@ void Button::setup()
 {
     // We use INPUT_PULLUP because the button connects the pin to GND.
     // This means the pin is HIGH when inactive, and LOW when active (pressed).
-    Serial.println("Setting up Motors....");
+    Serial.println("Setting up Button....");
     pinMode(_pin, INPUT_PULLUP);
 }
 
