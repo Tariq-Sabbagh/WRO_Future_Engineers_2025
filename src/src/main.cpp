@@ -2,7 +2,7 @@
 #include <Wire.h> 
 
 #include "core/ObstacleAvoider.h"
-#include "core/Garage.h"
+// #include "core/Garage.h"
 
 #ifdef RUN_TESTS
   #include "test/Tests.h"
@@ -12,7 +12,7 @@
 // Car myCar;
 
 ObstacleAvoider robot;
-// Garage garage;
+OutParking outParking;
 
 //==============================================================================
 // ARDUINO SETUP
@@ -30,9 +30,10 @@ void setup() {
     // myCar.setup();
     // garage.begin();
     robot.setup();
-    // _garage.Do();
+    outParking.Do();
+
     
-    Serial.println("finish");
+    Serial.println("finish parking");
 
     #endif
   }
@@ -46,6 +47,6 @@ void setup() {
     #else
     // In normal mode, we run the car's main logic loop.
     // myCar.loop();
-    robot.loop();
+    // robot.loop();
   #endif
 }

@@ -4,7 +4,9 @@
         "memory": "cpp",
         "random": "cpp",
         "compare": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "istream": "cpp",
+        "functional": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
