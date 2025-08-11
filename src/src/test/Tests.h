@@ -300,7 +300,7 @@ void runHardwareTests()
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
 
   // test_motors();
-  // test_steering();
+  test_steering();
   // test_distance_sensors();
   // test_wire();
   // test_imu();
