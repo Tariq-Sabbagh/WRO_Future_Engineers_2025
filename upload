@@ -66614,4 +66614,965 @@ ESP32 Ready
 [   147][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
 [   164][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
 [   181][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
-[   198][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned
+[   198][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   215][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   232][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   249][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   267][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   284][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   301][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   318][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   335][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   352][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   369][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Starting TOF Sensor...
+----------------------------------------
+Press button to continue: 
+Obstacle Avoider Initialized. Waiting for commands...
+Setting up Streering....
+finish parking
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script upload[K]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script upload
+[?2004lProcessing [36m[1mesp32dev[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev/src/core/OutParking.cpp.o
+[0mCompiling .pio/build/esp32dev/src/main.cpp.o
+[0mLinking .pio/build/esp32dev/firmware.elf
+[0mRetrieving maximum program size .pio/build/esp32dev/firmware.elf
+[0mChecking size .pio/build/esp32dev/firmware.elf
+[0mAdvanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+[0mRAM:   [=         ]   7.5% (used 24436 bytes from 327680 bytes)
+[0mFlash: [===       ]  25.4% (used 332365 bytes from 1310720 bytes)
+[0mBuilding .pio/build/esp32dev/firmware.bin
+[0mesptool.py v4.5.1
+[0mCreating esp32 image...
+[0mMerged 2 ELF sections
+[0mSuccessfully created esp32 image.
+[0mConfiguring upload protocol...
+[0mAVAILABLE: cmsis-dap, esp-bridge, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+[0mCURRENT: upload_protocol = esptool
+[0mLooking for upload port...
+[0mUsing manually specified: /dev/ttyUSB0
+[0mUploading .pio/build/esp32dev/firmware.bin
+[0mesptool.py v4.5.1
+[0mSerial port /dev/ttyUSB0
+[0mConnecting....
+Chip is ESP32-D0WD-V3 (revision v3.1)
+[0mFeatures: WiFi, BT, Dual Core, 240MHz, VRef calibration in efuse, Coding Scheme None
+[0mCrystal is 40MHz
+[0mMAC: ec:e3:34:47:a6:54
+[0mUploading stub...
+[0mRunning stub...
+[0mStub running...
+[0mChanging baud rate to 460800
+[0mChanged.
+[0mConfiguring flash size...
+[0mFlash will be erased from 0x00001000 to 0x00005fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x00061fff...
+Compressed 17536 bytes to 12202...
+[0mWriting at 0x00001000... (100 %)
+Wrote 17536 bytes (12202 compressed) at 0x00001000 in 0.4 seconds (effective 364.0 kbit/s)...
+Hash of data verified.
+[0mCompressed 3072 bytes to 146...
+[0mWriting at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.0 seconds (effective 1074.9 kbit/s)...
+Hash of data verified.
+[0mCompressed 8192 bytes to 47...
+[0mWriting at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.0 seconds (effective 1868.3 kbit/s)...
+Hash of data verified.
+[0mCompressed 332736 bytes to 186444...
+[0mWriting at 0x00010000... (8 %)
+Writing at 0x0001bd95... (16 %)
+[0mWriting at 0x0002875d... (25 %)
+[0mWriting at 0x0002dd02... (33 %)
+[0mWriting at 0x000334e3... (41 %)
+[0mWriting at 0x00038d08... (50 %)
+[0mWriting at 0x0003e64b... (58 %)
+[0mWriting at 0x00043a8e... (66 %)
+[0mWriting at 0x00048ec9... (75 %)
+[0mWriting at 0x0004e5f4... (83 %)
+[0mWriting at 0x00056e2a... (91 %)
+[0mWriting at 0x0005f2be... (100 %)
+[0mWrote 332736 bytes (186444 compressed) at 0x00010000 in 4.3 seconds (effective 618.6 kbit/s)...
+Hash of data verified.
+[0m
+[0mLeaving...
+[0mHard resetting via RTS pin...
+[0m====================== [[32m[1mSUCCESS[0m] Took 14.55 seconds ======================[0m
+
+[1mEnvironment[0m    [1mStatus[0m    [1mDuration[0m
+-------------  --------  ------------
+[36mesp32dev[0m       [32mSUCCESS[0m   00:00:14.553
+[32m====================== 1 succeeded in 00:00:14.553 ======================[0m
+--- Terminal on /dev/ttyUSB0 | 115200 8-N-1
+--- Available filters and text transformations: colorize, debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+Starting TOF Sensor...
+----------------------------------------
+Press button to continue: 
+Obstacle Avoider Initialized. Waiting for commands...
+Setting up Streering....
+finish parking
+AVOID CMD: dist=21.50 angle=3.20
+Started Avoiding_____________
+AVOID CMD: dist=24.50 angle=29.20
+0.56
+AVOID CMD: dist=27.90 angle=49.00
+1.00
+AVOID CMD: dist=34.00 angle=68.10
+1.50
+AVOID CMD: dist=31.70 angle=69.30
+1.62
+AVOID CMD: dist=20.10 angle=59.80
+1.62
+AVOID CMD: dist=14.10 angle=36.70
+1.62
+1.56
+1.44
+0.94
+0.69
+0.50
+0.37
+0.19
+0.06
+-0.13
+-0.19
+-0.31
+-0.44
+-0.56
+-0.75
+-0.88
+-1.00
+-1.06
+AVOID CMD: dist=24.50 angle=-10.30
+-1.19
+-1.25
+-1.31
+-1.37
+-1.44
+-1.50
+-1.50
+-1.50
+-1.50
+AVOID CMD: dist=25.40 angle=-10.00
+-1.50
+-1.50
+-1.50
+-1.50
+-1.44
+-1.44
+-1.44
+-1.37
+-1.37
+-1.31
+AVOID CMD: dist=25.20 angle=-10.00
+-1.25
+-1.19
+-1.19
+-1.12
+-1.06
+-1.00
+-0.94
+-0.88
+-0.81
+AVOID CMD: dist=24.20 angle=-9.90
+-0.75
+-0.62
+-0.50
+-0.44
+-0.31
+-0.25
+-0.19
+-0.13
+-0.06
+0.06
+0.19
+0.31
+0.44
+0.50
+0.62
+0.69
+0.81
+1.00
+1.12
+1.19
+1.31
+1.37
+1.50
+1.62
+1.87
+2.00
+2.12
+2.25
+2.37
+2.50
+2.75
+2.87
+3.00
+3.12
+3.25
+3.50
+3.62
+3.81
+3.87
+4.06
+4.19
+4.37
+4.50
+4.87
+5.00
+5.19
+AVOID CMD: dist=32.90 angle=69.70
+5.31
+5.44
+5.62
+5.75
+5.94
+6.06
+6.19
+Done avoiding_________
+AVOID CMD: dist=33.50 angle=70.30
+Started Avoiding_____________
+0.19
+0.37
+0.50
+0.62
+0.81
+1.00
+1.12
+1.25
+1.37
+2.00
+2.00
+2.25
+2.44
+2.44
+2.56
+2.56
+2.81
+3.62
+3.87
+4.19
+4.19
+4.50
+4.69
+4.69
+5.50
+6.19
+6.69
+7.37
+7.87
+8.63
+9.31
+10.19
+10.63
+11.31
+12.00
+12.00
+12.19
+12.19
+12.19
+12.44
+13.13
+13.13
+13.25
+13.19
+12.56
+12.56
+12.38
+12.19
+12.19
+12.06
+12.06
+11.88
+11.31
+11.06
+11.06
+10.94
+11.19
+Done avoiding_________
+AVOID CMD: dist=28.40 angle=-51.90
+Started Avoiding_____________
+0.19
+0.37
+0.50
+0.69
+0.94
+1.06
+1.19
+AVOID CMD: dist=41.80 angle=-65.10
+1.44
+1.56
+1.69
+1.81
+1.94
+2.19
+2.37
+2.69
+AVOID CMD: dist=42.20 angle=-64.80
+2.81
+3.19
+3.37
+3.75
+4.12
+4.31
+4.87
+5.06
+5.25
+5.44
+5.69
+5.87
+6.06
+6.25
+6.44
+6.81
+7.06
+7.37
+7.69
+7.87
+8.25
+8.44
+8.88
+9.50
+10.00
+10.00
+10.63
+10.81
+11.50
+11.69
+12.38
+12.38
+13.13
+13.31
+14.00
+14.25
+Done avoiding_________
+AVOID CMD: dist=16.00 angle=-47.20
+Started Avoiding_____________
+5.25
+7.62
+9.88
+14.00
+19.06
+20.44
+21.75
+22.87
+24.56
+Done avoiding_________
+AVOID CMD: dist=23.20 angle=-74.20
+AVOID CMD: dist=22.00 angle=-73.20
+AVOID CMD: dist=19.30 angle=-70.80
+Started Avoiding_____________
+-0.56
+-1.00
+-1.00
+-1.25
+AVOID CMD: dist=19.80 angle=-34.10
+-1.00
+-0.56
+-0.06
+0.44
+1.06
+2.44
+3.12
+3.94
+Done avoiding_________
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13�ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+--- Modular Car Initializing ---
+--- Running in Normal Operation Mode ---
+Setting up Motors....
+Setting up Streering....
+Setting up Button....
+ESP32 Ready
+[    96][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   114][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   131][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   148][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   165][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   182][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   199][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   216][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   233][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   250][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   268][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   285][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   302][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   319][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   336][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   353][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   370][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Starting TOF Sensor...
+----------------------------------------
+Press button to continue: 
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m (reverse-i-search)`': [Kt': out_parking/scrip[7mt[27m upload[1Pe': out_parking/script [7mte[27msts': out_parking/script [7mtes[27mtt': out_parking/script [7mtest[27m[5P]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script test[C
+[?2004lUploading firmware in TEST MODE...
+Processing [36m[1mesp32dev-test[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev-test/src/core/ObstacleAvoider.cpp.o
+[0mCompiling .pio/build/esp32dev-test/src/core/OutParking.cpp.o
+[0mCompiling .pio/build/esp32dev-test/src/core/Steering.cpp.o
+[0mCompiling .pio/build/esp32dev-test/src/main.cpp.o
+[0m[33mIn file included from src/main.cpp:8:
+[0m[33msrc/test/Tests.h: In function 'void test_forward()':
+[0m[31msrc/test/Tests.h:312:5: error: '_imu' was not declared in this scope
+[0m[33m     _imu.update();
+[0m[33m     ^~~~
+[0m[33msrc/test/Tests.h:312:5: note: suggested alternative: 'imu'
+[0m[33m     _imu.update();
+[0m[33m     ^~~~
+[0m[33m     imu
+[0m[31msrc/test/Tests.h:316:9: error: '_servo' was not declared in this scope
+[0m[33m         _servo.setAngle(-correction);
+[0m         ^~~~~~
+[33msrc/test/Tests.h:316:9: note: suggested alternative: 'servo'
+[0m[33m         _servo.setAngle(-correction);
+[0m         ^~~~~~
+[33m         servo
+[0m[31m*** [.pio/build/esp32dev-test/src/main.cpp.o] Error 1
+[0m======================= [[31m[1mFAILED[0m] Took 3.97 seconds =======================[0m
+
+[1mEnvironment[0m    [1mStatus[0m    [1mDuration[0m
+-------------  --------  ------------
+[36mesp32dev-test[0m  [31mFAILED[0m    00:00:03.973
+[31m================= 1 failed, 0 succeeded in 00:00:03.973 =================[0m
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script test
+[?2004lUploading firmware in TEST MODE...
+Processing [36m[1mesp32dev-test[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev-test/src/main.cpp.o
+[0m[33mIn file included from src/main.cpp:8:
+[0m[33msrc/test/Tests.h: In function 'void test_forward()':
+[0m[31msrc/test/Tests.h:312:5: error: '_imu' was not declared in this scope
+[0m[33m     _imu.update();
+[0m[33m     ^~~~
+[0m[33msrc/test/Tests.h:312:5: note: suggested alternative: 'imu'
+[0m[33m     _imu.update();
+[0m[33m     ^~~~
+[0m[33m     imu
+[0m[31m*** [.pio/build/esp32dev-test/src/main.cpp.o] Error 1
+[0m======================= [[31m[1mFAILED[0m] Took 3.46 seconds =======================[0m
+
+[1mEnvironment[0m    [1mStatus[0m    [1mDuration[0m
+-------------  --------  ------------
+[36mesp32dev-test[0m  [31mFAILED[0m    00:00:03.464
+[31m================= 1 failed, 0 succeeded in 00:00:03.464 =================[0m
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script testupload[2Ptest
+[?2004lUploading firmware in TEST MODE...
+Processing [36m[1mesp32dev-test[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev-test/src/main.cpp.o
+[0m^C[31mAbortedByUser: Aborted by user[0m
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script test
+[?2004lUploading firmware in TEST MODE...
+Processing [36m[1mesp32dev-test[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev-test/src/main.cpp.o
+[0mLinking .pio/build/esp32dev-test/firmware.elf
+[0mRetrieving maximum program size .pio/build/esp32dev-test/firmware.elf
+[0mChecking size .pio/build/esp32dev-test/firmware.elf
+[0mAdvanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+[0mRAM:   [=         ]   7.5% (used 24604 bytes from 327680 bytes)
+[0mFlash: [==        ]  24.0% (used 314245 bytes from 1310720 bytes)
+[0mBuilding .pio/build/esp32dev-test/firmware.bin
+[0mesptool.py v4.5.1
+[0mCreating esp32 image...
+[0mMerged 2 ELF sections
+[0mSuccessfully created esp32 image.
+[0mConfiguring upload protocol...
+[0mAVAILABLE: cmsis-dap, esp-bridge, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+[0mCURRENT: upload_protocol = esptool
+[0mLooking for upload port...
+[0mUsing manually specified: /dev/ttyUSB0
+[0mUploading .pio/build/esp32dev-test/firmware.bin
+[0mesptool.py v4.5.1
+[0mSerial port /dev/ttyUSB0
+[0mConnecting....
+Chip is ESP32-D0WD-V3 (revision v3.1)
+[0mFeatures: WiFi, BT, Dual Core, 240MHz, VRef calibration in efuse, Coding Scheme None
+[0mCrystal is 40MHz
+[0mMAC: ec:e3:34:47:a6:54
+[0mUploading stub...
+[0mRunning stub...
+[0mStub running...
+[0mChanging baud rate to 460800
+[0mChanged.
+[0mConfiguring flash size...
+[0mFlash will be erased from 0x00001000 to 0x00005fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x0005cfff...
+Compressed 17536 bytes to 12202...
+[0mWriting at 0x00001000... (100 %)
+Wrote 17536 bytes (12202 compressed) at 0x00001000 in 0.4 seconds (effective 362.5 kbit/s)...
+Hash of data verified.
+[0mCompressed 3072 bytes to 146...
+[0mWriting at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.0 seconds (effective 1116.7 kbit/s)...
+Hash of data verified.
+[0mCompressed 8192 bytes to 47...
+[0mWriting at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.0 seconds (effective 1870.8 kbit/s)...
+Hash of data verified.
+[0mCompressed 314608 bytes to 172457...
+[0mWriting at 0x00010000... (9 %)
+Writing at 0x0001be6e... (18 %)
+[0mWriting at 0x00028c23... (27 %)
+[0mWriting at 0x0002e12c... (36 %)
+[0mWriting at 0x00033902... (45 %)
+[0mWriting at 0x000390b0... (54 %)
+[0mWriting at 0x0003e547... (63 %)
+[0mWriting at 0x00043be1... (72 %)
+[0mWriting at 0x00049163... (81 %)
+[0mWriting at 0x00051815... (90 %)
+[0mWriting at 0x00059ba7... (100 %)
+[0mWrote 314608 bytes (172457 compressed) at 0x00010000 in 3.9 seconds (effective 638.8 kbit/s)...
+Hash of data verified.
+[0m
+[0mLeaving...
+[0mHard resetting via RTS pin...
+[0m====================== [[32m[1mSUCCESS[0m] Took 12.61 seconds ======================[0m
+
+[1mEnvironment[0m    [1mStatus[0m    [1mDuration[0m
+-------------  --------  ------------
+[36mesp32dev-test[0m  [32mSUCCESS[0m   00:00:12.613
+[32m====================== 1 succeeded in 00:00:12.613 ======================[0m
+--- Terminal on /dev/ttyUSB0 | 115200 8-N-1
+--- Available filters and text transformations: colorize, debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+Setting up Motors....
+Setting up Streering....
+----------------------------------------
+Press button to continue: Motor Test
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+--- Modular Car Initializing ---
+!!! RUNNING IN TEST MODE !!!
+
+===== STARTING HARDWARE DIAGNOSTIC SUITE =====
+[    93][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   111][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   128][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   145][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   162][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   179][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   196][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   213][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   230][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   247][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   265][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   282][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   299][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   316][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   333][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   350][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Setting up Motors....
+Setting up Streering....
+----------------------------------------
+Press button to continue: Motor Test
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+--- Modular Car Initializing ---
+!!! RUNNING IN TEST MODE !!!
+
+===== STARTING HARDWARE DIAGNOSTIC SUITE =====
+[    93][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   111][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   128][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   145][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   162][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   179][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   196][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   213][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   230][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   247][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   265][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   282][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   299][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   316][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   333][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   350][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Setting up Motors....
+Setting up Streering....
+----------------------------------------
+Press button to continue: Motor Test
+ets Jul 29 2019 12:21:46�ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+--- Modular Car Initializing ---
+!!! RUNNING IN TEST MODE !!!
+
+===== STARTING HARDWARE DIAGNOSTIC SUITE =====
+[    92][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   110][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   127][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   144][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   161][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   178][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   195][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   212][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   229][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   246][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   264][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   281][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   298][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   315][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   332][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   349][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Setting up Motors....
+Setting up Streering....
+----------------------------------------
+Press button to continue: Motor Test
+[?2004h]0;mega@raspberrypi: ~[01;32mmega@raspberrypi[00m:[01;34m~ $[00m out_parking/script testupload
+[?2004lProcessing [36m[1mesp32dev[0m (platform: espressif32; board: esp32dev; framework: arduino)
+[1m--------------------------------------------------------------------------[0m
+Verbose mode can be enabled via `-v, --verbose` option
+[0mCONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+[0mPLATFORM: Espressif 32 (6.11.0) > Espressif ESP32 Dev Module
+[0mHARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+[0mDEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+[0mPACKAGES: 
+[0m - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+[0m - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+[0m - tool-mkfatfs @ 2.0.1 
+[0m - tool-mklittlefs @ 1.203.210628 (2.3) 
+[0m - tool-mkspiffs @ 2.230.0 (2.30) 
+[0m - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+[0mLDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+[0mLDF Modes: Finder ~ chain, Compatibility ~ soft
+[0mFound 42 compatible libraries
+[0mScanning dependencies...
+[0mDependency Graph
+[0m|-- ESP32Servo @ 3.0.7
+[0m|-- Adafruit Unified Sensor @ 1.1.15
+[0m|-- Adafruit BNO055 @ 1.6.4
+[0m|-- NewPing @ 1.9.7
+[0m|-- SPI @ 2.0.0
+[0m|-- Adafruit_VL53L0X @ 1.2.4
+[0m|-- AS5600 @ 0.6.6
+[0m|-- Wire @ 2.0.0
+[0mBuilding in release mode
+[0mCompiling .pio/build/esp32dev/src/main.cpp.o
+[0mRetrieving maximum program size .pio/build/esp32dev/firmware.elf
+[0mChecking size .pio/build/esp32dev/firmware.elf
+[0mAdvanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+[0mRAM:   [=         ]   7.5% (used 24436 bytes from 327680 bytes)
+[0mFlash: [===       ]  25.4% (used 332365 bytes from 1310720 bytes)
+[0mConfiguring upload protocol...
+[0mAVAILABLE: cmsis-dap, esp-bridge, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+[0mCURRENT: upload_protocol = esptool
+[0mLooking for upload port...
+[0mUsing manually specified: /dev/ttyUSB0
+[0mUploading .pio/build/esp32dev/firmware.bin
+[0mesptool.py v4.5.1
+[0mSerial port /dev/ttyUSB0
+[0mConnecting......
+Chip is ESP32-D0WD-V3 (revision v3.1)
+[0mFeatures: WiFi, BT, Dual Core, 240MHz, VRef calibration in efuse, Coding Scheme None
+[0mCrystal is 40MHz
+[0mMAC: ec:e3:34:47:a6:54
+[0mUploading stub...
+[0mRunning stub...
+[0mStub running...
+[0mChanging baud rate to 460800
+[0mChanged.
+[0mConfiguring flash size...
+[0mFlash will be erased from 0x00001000 to 0x00005fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x00061fff...
+Compressed 17536 bytes to 12202...
+[0mWriting at 0x00001000... (100 %)
+Wrote 17536 bytes (12202 compressed) at 0x00001000 in 0.4 seconds (effective 362.4 kbit/s)...
+Hash of data verified.
+[0mCompressed 3072 bytes to 146...
+[0mWriting at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.0 seconds (effective 1115.6 kbit/s)...
+Hash of data verified.
+[0mCompressed 8192 bytes to 47...
+[0mWriting at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.0 seconds (effective 1867.4 kbit/s)...
+Hash of data verified.
+[0mCompressed 332736 bytes to 186444...
+[0mWriting at 0x00010000... (8 %)
+Writing at 0x0001bd95... (16 %)
+[0mWriting at 0x0002875d... (25 %)
+[0mWriting at 0x0002dd02... (33 %)
+[0mWriting at 0x000334e3... (41 %)
+[0mWriting at 0x00038d08... (50 %)
+[0mWriting at 0x0003e64b... (58 %)
+[0mWriting at 0x00043a8e... (66 %)
+[0mWriting at 0x00048ec9... (75 %)
+[0mWriting at 0x0004e5f4... (83 %)
+[0mWriting at 0x00056e2a... (91 %)
+[0mWriting at 0x0005f2be... (100 %)
+[0mWrote 332736 bytes (186444 compressed) at 0x00010000 in 4.3 seconds (effective 617.0 kbit/s)...
+Hash of data verified.
+[0m
+[0mLeaving...
+[0mHard resetting via RTS pin...
+[0m====================== [[32m[1mSUCCESS[0m] Took 10.34 seconds ======================[0m
+
+[1mEnvironment[0m    [1mStatus[0m    [1mDuration[0m
+-------------  --------  ------------
+[36mesp32dev[0m       [32mSUCCESS[0m   00:00:10.344
+[32m====================== 1 succeeded in 00:00:10.344 ======================[0m
+--- Terminal on /dev/ttyUSB0 | 115200 8-N-1
+--- Available filters and text transformations: colorize, debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+Starting TOF Sensor...
+----------------------------------------
+Press button to continue: 
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+--- Modular Car Initializing ---
+--- Running in Normal Operation Mode ---
+Setting up Motors....
+Setting up Streering....
+Setting up Button....
+ESP32 Ready
+[    95][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   113][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   130][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   147][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   164][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   181][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   198][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   215][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   232][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   249][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   267][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   284][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   301][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   318][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   335][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+[   352][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error -1
+Starting TOF Sensor...
+----------------------------------------
+Press button to continue: 
+Obstacle Avoider Initialized. Waiting for commands...
+Setting up Streering....
+finish parking
+AVOID CMD: dist=41.40 angle=64.70
+Started Avoiding_____________
+0.06
+0.13
+0.13
+0.13
+0.13
+0.19
+0.19
+AVOID CMD: dist=44.40 angle=61.20
+0.19
+0.19
+0.25
+0.19
+0.25
+0.25
+0.25
+0.25
+0.25
+0.19
+0.19
+0.19
+0.19
+0.19
+0.19
+0.19
+0.13
+AVOID CMD: dist=44.00 angle=61.30
+0.13
+0.06
+0.06
+0.06
+0.06
+0.00
+0.00
+-0.06
+AVOID CMD: dist=43.30 angle=62.60
+-0.

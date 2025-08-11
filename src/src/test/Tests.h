@@ -25,6 +25,7 @@ DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRA
 IMU testImu;
 Encoder encoder;
 TOFSensor tof(SHT_LOX, 0x20);
+PIDController _pid;
 /**
  * @brief A simple blocking wait function, an alternative to delay().
  * Prints a message to the serial monitor.
@@ -294,17 +295,42 @@ void test_turn()
   myCar._turn(90);
 }
 
+void test_forward()
+{
+  _pid.setup(3.5, 0, 0);
+  _pid.setOutputLimits(-90, 90);
+  if (!testImu.setup())
+  {
+    Serial.println("IMU failed to initialize. Test aborted.");
+    return;
+  }
+  testMotors.setup();
+  testSteering.setup();
+  button.waitForPress("Motor Test");
+  testMotors.forward(FORWARD_SPEED);
+  while (true)
+  {
+    testImu.update();
+    float correction = _pid.compute(0, testImu.getHeading());
+        //  Serial.println(abs(_pid.geterror()));
+        // _steeringAngle = -correction;
+        testSteering.setAngle(-correction);
+  }
+  
+}
+
 void runHardwareTests()
 {
 
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
 
   // test_motors();
-  test_steering();
+  // test_steering();
+  test_forward();
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  test_encoder();
+  // test_encoder();
   // test_TOF();
   // test_turn();
 

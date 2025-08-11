@@ -78,7 +78,7 @@ void OutParking::Do()
         // _steeringAngle = -correction;
         _servo.setAngle(-correction);
     }
-    while(abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 60)
+    while(abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
     {
         _motors.backward(FORWARD_SPEED+40);
         _encoder.update();
