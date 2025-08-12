@@ -47,23 +47,23 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 142, 0]),
-                'upper': np.array([255, 255, 130]),
+                'lower': np.array([0, 0, 0]),
+                'upper': np.array([255, 175, 69]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 151]),
-                'upper': np.array([255, 120, 255]),
+                'lower': np.array([0, 0, 135]),
+                'upper': np.array([255, 113, 255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([131, 138, 100]),
+                'lower': np.array([0, 120, 81]),
+                'upper': np.array([255, 149, 100]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 137, 100]),
-                'upper': np.array([131, 247, 167]),
+                'lower': np.array([0, 128, 138]),
+                'upper': np.array([119, 160, 252]),
                 'offset_adjust': -90
             }
         }

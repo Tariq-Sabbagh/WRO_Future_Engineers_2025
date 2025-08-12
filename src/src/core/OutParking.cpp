@@ -46,10 +46,10 @@ void OutParking::begin()
 void OutParking::Do()
 
 {
-    _servo.setup();
+    // _servo.setup();
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
-    _encoder.update();
+    // _encoder.update();
  
     if (_ultra.getLeftCm() < _ultra.getRightCm())
 

@@ -11,6 +11,14 @@
 // Create our main car object
 // Car myCar;
 
+
+MotorController motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
+Steering servo(SERVO_PIN);
+Button button(BUTTON_PIN);
+Encoder encoder;
+IMU imu;
+TOFSensor backSensor(SHT_LOX, 0x20);
+Ultrasonic ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 ObstacleAvoider robot;
 OutParking outParking;
 
@@ -21,6 +29,21 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n--- Modular Car Initializing ---");
   // Wire.begin();
+   Wire.begin(); 
+
+    
+    motors.setup();
+    servo.setup();
+    button.setup();
+    encoder.begin();
+    while (!imu.setup()) {
+        Serial.println("FATAL: IMU failed to initialize.");
+    }
+
+    if (!backSensor.begin()) {
+        Serial.println("TOF Sensor failed to init!");
+        while (1);
+    }
 
   #ifdef RUN_TESTS
     Serial.println("!!! RUNNING IN TEST MODE !!!");
@@ -29,6 +52,10 @@ void setup() {
     Serial.println("--- Running in Normal Operation Mode ---");
     // myCar.setup();
     // garage.begin();
+    robot.attachHardware(&motors, &servo, &button, &encoder, &imu, &backSensor , &ultra);
+    outParking.attachHardware(&motors, &servo, &encoder, &imu, &ultra);
+
+    
     robot.setup();
     outParking.Do();
 

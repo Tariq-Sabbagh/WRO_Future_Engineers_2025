@@ -18,28 +18,6 @@ float distance, angle, _forwardTarget = 0;
 int count_turn = 0;
 void ObstacleAvoider::setup()
 {
-    Wire.begin();
-    _motors.setup();
-    _servo.setup();
-    _button.setup();
-    _encoder.begin();
-    while (!Serial)
-        ; // Wait for serial monitor to open (remove for production)
-    Serial.println("ESP32 Ready");
-    if (!_imu.setup())
-    {
-        Serial.println("FATAL: IMU failed to initialize.");
-        _stopAndHalt();
-    }
-
-    Serial.println("Starting TOF Sensor...");
-
-    if (!_backSensor.begin())
-    {
-        Serial.println("Sensor failed to init!");
-        while (1)
-            ;
-    }
     _button.waitForPress();
 
     _pid.setup(3.5, 0, 0);
