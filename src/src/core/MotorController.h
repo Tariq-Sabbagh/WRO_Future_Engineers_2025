@@ -12,6 +12,7 @@ public:
     void backward(int speed);
     void move(int speed);
     void stop();
+    void stopBreak(int direction);
 
 private:
     int _dir1_pin;

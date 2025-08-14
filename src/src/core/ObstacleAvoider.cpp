@@ -9,8 +9,12 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _timer(),
                                      _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
                                      _backSensor(SHT_LOX, 0x20),
-                                     _comm() // Initialize the communicator
+                                     _comm(),
+                                     _motorPID(_motors, _encoder)
 {
+
+    _motorPID.setup(2.0, 0.5, 0.1, -255, 255);
+
     _currentState = FORWARD;
     _steeringAngle = 0;
 }
@@ -23,8 +27,91 @@ void ObstacleAvoider::setup()
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
+    _garageDoOut();
+
     _comm.clearSerialBuffer();
     Serial.println("Obstacle Avoider Initialized. Waiting for commands...");
+}
+void ObstacleAvoider::_garageDoOut()
+{
+
+    if (_ultra.getLeftCm() < _ultra.getRightCm())
+
+    {
+        _pid_target_parking = -_pid_target_parking;
+    }
+
+    while (abs(_imu.getHeading()) <= 90)
+    {
+
+        _imu.update();
+        float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
+        _servo.setAngle(-correction);
+        _motors.move(FORWARD_SPEED);
+    }
+    while (_ultra.getFrontCm() >= 37)
+    {
+        _imu.update();
+        float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
+        _servo.setAngle(-correction);
+    }
+    _encoder.reset();
+    while (abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
+    {
+        _motors.backward(FORWARD_SPEED);
+        _encoder.update();
+        _imu.update();
+        float correction = _pid.compute(0, _imu.getHeading());
+        _servo.setAngle(correction);
+    }
+
+    _motors.stop();
+
+    //  _goForwardPID(50);
+}
+void ObstacleAvoider::_garageDoIn()
+{
+
+    if (_ultra.getLeftCm() < _ultra.getRightCm())
+
+    {
+        Serial.println(_ultra.getLeftCm());
+        _pid_target_parking = -_pid_target_parking;
+    }
+
+    while (abs(_imu.getHeading()) <= 80)
+    {
+
+        _imu.update();
+        _servo.setAngle(-_pid_target_parking * 0.4);
+        _motors.move(FORWARD_SPEED * 0.8);
+    }
+    _motors.stopBreak(-1);
+
+    while (_ultra.getFrontCm() <= 50)
+    {
+        Serial.println(_ultra.getFrontCm());
+        Serial.println(_backSensor.getDistance());
+
+        _imu.update();
+        float correction = _pid.compute(0, _imu.getHeading());
+        _servo.setAngle(0);
+        _motors.move(-FORWARD_SPEED * 0.9);
+    }
+
+    while (abs(_imu.getHeading()) >= 5)
+    {
+        // Serial.println(abs(_imu.getHeading()));
+
+        _imu.update();
+        _servo.setAngle(-_pid_target_parking);
+        _motors.move(-FORWARD_SPEED * 0.9);
+    }
+    _servo.center();
+
+    _motors.stopBreak(-1);
+ 
+    //  _goForwardPID(50);
 }
 
 void ObstacleAvoider::loop()
@@ -101,7 +188,7 @@ void ObstacleAvoider::_resetCar()
     int distanceTOF = _backSensor.getDistance();
     // Serial.print("error:");
     // Serial.println(_pid.geterror());
-    if (distanceTOF <= 300 and abs(_pid.geterror()) < 15)
+    if (distanceTOF <= 350 and abs(_pid.geterror()) < 20)
     {
         // Serial.println(distanceTOF);
         // Serial.println(_pid.geterror());
@@ -128,7 +215,7 @@ void ObstacleAvoider::_avoidObstacle()
     // Serial.println(angle);
     if (abs(currentDistance) <= distance)
     {
-       
+
         correction = _pid.compute(angle, currentHeading);
         _steeringAngle = -correction;
         Serial.println(_imu.getHeading());
@@ -149,7 +236,7 @@ void ObstacleAvoider::_turn()
     _steeringAngle = -correction;
     // _motors.move(FORWARD_SPEED - 45);
     // Serial.println(_pid.geterror());
-    if (_ultra.getFrontCm() <= 20 and _pid.geterror() < abs(15))
+    if (_ultra.getFrontCm() <= 35 and _pid.geterror() < abs(20))
     {
         _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
@@ -187,6 +274,38 @@ void ObstacleAvoider::_goForward()
         _steeringAngle = -correction;
         _motors.forward(FORWARD_SPEED);
     }
+}
+
+void ObstacleAvoider::_goForwardPID(float targetDistanceCm)
+{
+    if (_motorPID.getTargetDistance() != targetDistanceCm)
+    {
+        _motorPID.reset();
+        _motorPID.setTargetDistance(targetDistanceCm); // تحديد الهدف الجديد
+        Serial.print("Moving forward ");
+        Serial.print(targetDistanceCm);
+        Serial.println(" cm using PID");
+    }
+
+    // تحديث حركة الموتور بناءً على PID
+    if (_motorPID.update())
+    {
+        // وصلنا للمسافة المطلوبة
+        Serial.println("Target distance reached!");
+        _motorPID.reset(); // إعادة الضبط إذا أردنا هدف جديد لاحقًا
+        // هنا ممكن تنتقل لحالة أخرى إذا تستخدم state machine
+        //_currentState = TURN; // مثال: الانتقال للحالة TURN
+    }
+
+    // التتبع للطباعة/debug
+    Serial.print("Current Distance: ");
+    Serial.print(_motorPID.getCurrentDistance());
+    Serial.print(" cm, PID Output: ");
+    Serial.println(_motorPID.getLastOutput());
+
+    // توجيه العجلات حسب الـ steering angle المعتاد
+    float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+    _steeringAngle = -correction;
 }
 
 void ObstacleAvoider::_stopAndHalt()

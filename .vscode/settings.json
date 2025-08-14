@@ -6,7 +6,8 @@
         "compare": "cpp",
         "atomic": "cpp",
         "istream": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "motorpid,h": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

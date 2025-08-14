@@ -57,7 +57,7 @@ void setup() {
 
     
     robot.setup();
-    outParking.Do();
+    
 
     
     Serial.println("finish parking");

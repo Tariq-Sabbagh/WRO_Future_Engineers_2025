@@ -37,7 +37,7 @@ class ObstacleDetector:
         self.MAX_AREA = 3000.0
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
-        self.turn_detection_cooldown = Cooldown(7.0)
+        self.turn_detection_cooldown = Cooldown(6.0)
         self.wide_roi_cooldown = Cooldown(4.0)
         self.movedPoint = 5
         self.first_turn_detected = False
@@ -138,30 +138,48 @@ class ObstacleDetector:
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
 
-    def find_largest_contour(self, mask, min_area=3000):
-        """Find largest valid contour in mask"""
-        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    def find_largest_contour(self,mask, min_area=3000, max_area=100000):
+        """
+        Find the largest rectangle-like contour in a mask.
+        Returns the contour if found, otherwise None.
+        """
+       
+        if mask is None:
+            return None
 
+    
+        if len(mask.shape) == 3:
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+    
+        mask = mask.astype(np.uint8)
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         valid_contours = []
 
         for contour in contours:
-            x, y, w, h = cv2.boundingRect(contour)
             contour_area = cv2.contourArea(contour)
-            # Reject if width > height
-            if w >= h or h > 3 * w:
-                continue
-    
-            # Reject if area (either rectangle or contour) exceeds MAX_AREA
-            if contour_area <= self.MAX_AREA:
+            if contour_area < min_area or contour_area > max_area:
                 continue
 
-            valid_contours.append(contour)
+            x, y, w, h = cv2.boundingRect(contour)
+            # Check aspect ratio (width < height < 3*width)
+            if w >= h or h > 3 * w:
+                continue
+
+            # Approximate contour to polygon and check for rectangle
+            peri = cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
+            if len(approx) == 4:
+                valid_contours.append(contour)
 
         if not valid_contours:
             return None
 
+        # Return the largest valid contour
         largest_contour = max(valid_contours, key=cv2.contourArea)
-        return largest_contour if cv2.contourArea(largest_contour) > min_area else None
+        return largest_contour
+
 
 
     def calculate_distance(self, pixel_height):
@@ -247,6 +265,9 @@ class ObstacleDetector:
         """Capture and prepare a frame from camera"""
         frame = self.picam2.capture_array()
         frame = cv2.flip(frame, -1)
+        brightness = 3
+        contrast = 1.4
+        frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
         # h, w = frame.shape[:2]
 
         # # Replace these with your actual calibration values:

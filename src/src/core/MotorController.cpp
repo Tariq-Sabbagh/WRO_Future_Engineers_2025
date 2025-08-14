@@ -53,3 +53,22 @@ void MotorController::stop() {
     digitalWrite(_dir2_pin, LOW);
     analogWrite(_speed_pin, 0);
 }
+
+void MotorController::stopBreak(int direction) {
+    if (direction>0)
+{
+    move(255);
+    delay(100);
+}
+else if (direction <0)
+{
+    move(-255);
+    delay(100);
+}
+else{
+
+}
+    digitalWrite(_dir1_pin, LOW);
+    digitalWrite(_dir2_pin, LOW);
+    analogWrite(_speed_pin, 0);
+}

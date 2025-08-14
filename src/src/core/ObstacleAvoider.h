@@ -11,6 +11,7 @@
 #include "Button.h"
 #include <Wire.h>
 #include "Timer.h"
+#include "MotorPID.h"
 #include "core/DistanceSensors.h"
 #include "core/TOFSensor.h"
 #include "core/OutParking.h"
@@ -52,11 +53,12 @@ private:
     SerialCommunicator _comm; // The new communicator object
     Button* _button;
     Timer _timer;
-    DistanceSensors* _ultra;
-    TOFSensor* _backSensor;
-     
+    DistanceSensors _ultra;
+    TOFSensor _backSensor;
+    MotorSpeedPID _motorPID;
     float _steeringAngle;
     float _backwardTarget;
+    int _pid_target_parking = -100;
 
     // State Machine
     enum State
@@ -82,6 +84,8 @@ private:
     void _resetCar();
     void _garageDoOut();
     void _garageDoIn();
+    void _goForwardPID(float targetDistanceCm);
+    
 };
 
 #endif // OBSTACLE_AVOIDER_H

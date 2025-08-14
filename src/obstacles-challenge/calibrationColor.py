@@ -68,6 +68,10 @@ def video_feed():
         while True:
             frame = picam2.capture_array()
             frame = cv2.flip(frame, -1)
+            brightness = 3
+            contrast = 1.4
+            frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
+
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
             lab = cv2.GaussianBlur(lab, (7, 7), 0)
             l, a, b = cv2.split(lab)
