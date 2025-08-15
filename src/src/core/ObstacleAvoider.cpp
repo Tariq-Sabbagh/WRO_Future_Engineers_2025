@@ -1,6 +1,6 @@
 #include "ObstacleAvoider.h"
 
-ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
+ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN,&_encoder),
                                      _servo(SERVO_PIN),
                                      _imu(),
                                      _pid(),
@@ -71,7 +71,7 @@ void ObstacleAvoider::_garageDoOut()
     _encoder.reset();
     while (abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
     {
-        _motors.backward(FORWARD_SPEED + 20);
+        _motors.backward(FORWARD_SPEED );
         _encoder.update();
         _imu.update();
         float correction = _pid.compute(0, _imu.getHeading());
@@ -161,7 +161,7 @@ void ObstacleAvoider::loop()
         //     _goBackward();
         //     break;
     }
-    _get_away_walls();
+   
     if (count_turn >= 12)
     {
         _motors.stop();
@@ -178,11 +178,11 @@ void ObstacleAvoider::_get_away_walls()
     const float k = 1.2;
     if (right <= 40 and right != 0)
     {
-        _steeringAngle += k * (40 - right);
+        _steeringAngle += k * (25 - right);
     }
     if (left <= 40 and left != 0)
     {
-        _steeringAngle -= k * (40 - left);
+        _steeringAngle -= k * (25 - left);
     }
 }
 void ObstacleAvoider::_stopUntilTimer()
@@ -196,15 +196,15 @@ void ObstacleAvoider::_resetCar()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = correction;
-    _motors.move(- (FORWARD_SPEED + 20));
+    _motors.move(- (FORWARD_SPEED ));
     // Serial.println(_backSensor.readDistance());
     int distanceTOF = _backSensor.getDistance();
     // Serial.print("error:");
     // Serial.println(_pid.geterror());
-    if (distanceTOF <= 350 and abs(_pid.geterror()) < 20)
+    if (distanceTOF <= 350 and abs(_pid.geterror()) < 15)
     {
         // Serial.println(distanceTOF);
-        // Serial.println(_pid.geterror());
+        Serial.println(_pid.geterror());
         count_turn++;
         _motors.move(FORWARD_SPEED);
         _currentState = FORWARD;
@@ -231,7 +231,7 @@ void ObstacleAvoider::_avoidObstacle()
 
         correction = _pid.compute(angle, currentHeading);
         _steeringAngle = -correction;
-        Serial.println(_imu.getHeading());
+        // Serial.println(_imu.getHeading());
         _motors.forward(FORWARD_SPEED);
     }
     else
@@ -274,6 +274,7 @@ void ObstacleAvoider::_goBackward()
 
 void ObstacleAvoider::_goForward()
 {
+     _get_away_walls();
     if (_comm.getManeuverValues(distance, angle) and abs(_pid.geterror()) < 30)
     {
         _encoder.reset();

@@ -37,7 +37,7 @@ class ObstacleDetector:
         self.MAX_AREA = 3000.0
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
-        self.turn_detection_cooldown = Cooldown(6.0)
+        self.turn_detection_cooldown = Cooldown(5.5)
         self.wide_roi_cooldown = Cooldown(3.5)
         self.movedPoint = 5
         self.first_turn_detected = False
@@ -47,23 +47,23 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 154, 0]),
-                'upper': np.array([102, 255, 76]),
-                'offset_adjust': 20
+                'lower': np.array([0, 161, 0]),
+                'upper': np.array([97, 255, 56]),
+                'offset_adjust': 15
             },
             'green': {
-                'lower': np.array([0, 0, 133]),
-                'upper': np.array([255, 123 , 255]),
+                'lower': np.array([0, 0, 142]),
+                'upper': np.array([255, 118 , 255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([70, 127, 0]),
-                'upper': np.array([255, 154, 95]),
+                'lower': np.array([117, 120, 0]),
+                'upper': np.array([255, 160, 98]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 140, 140]),
-                'upper': np.array([118, 183, 255]),
+                'lower': np.array([0, 173, 118]),
+                'upper': np.array([255, 255, 255]),
                 'offset_adjust': -90
             }
         }
@@ -265,9 +265,9 @@ class ObstacleDetector:
         """Capture and prepare a frame from camera"""
         frame = self.picam2.capture_array()
         frame = cv2.flip(frame, -1)
-        # brightness = 3
-        # contrast = 1.8
-        # frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
+        brightness = 7
+        contrast = 2
+        frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
         # h, w = frame.shape[:2]
 
         # # Replace these with your actual calibration values:

@@ -19,11 +19,11 @@
 Servo servo;
 Button button(BUTTON_PIN);
 // Instantiate objects specifically for testing
-MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN);
 Steering testSteering(SERVO_PIN);
 DistanceSensors testDistSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT);
 IMU testImu;
 Encoder encoder;
+MotorController testMotors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN, &encoder); 
 TOFSensor tof(SHT_LOX, 0x20);
 PIDController _pid;
 /**
@@ -287,13 +287,13 @@ void test_serial_comm()
   Serial.println("Serial communication test complete.");
 }
 
-void test_turn()
-{
-  Car myCar;
-  myCar.setup();
-  button.waitForPress("Turn 90");
-  myCar._turn(90);
-}
+// void test_turn()
+// {
+//   Car myCar;
+//   myCar.setup();
+//   button.waitForPress("Turn 90");
+//   myCar._turn(90);
+// }
 
 void test_forward()
 {
@@ -318,7 +318,35 @@ void test_forward()
   }
   
 }
-
+void test_forward_with_static_speed()
+{
+    _pid.setup(3.5, 0, 0);
+    _pid.setOutputLimits(-90, 90);
+    if (!testImu.setup())
+    {
+      Serial.println("IMU failed to initialize. Test aborted.");
+      return;
+    }
+    if (!encoder.begin())
+  {
+    Serial.println("Encoder not detected!");
+    while (1)
+      ;
+  }
+    testMotors.setup();
+    testSteering.setup();
+    button.waitForPress("Forward Test with static speed");
+    testMotors.setTargetSpeed(70);
+    while (true)
+    {
+      testImu.update();
+      testMotors.updatePID();
+      float correction = _pid.compute(0, testImu.getHeading());
+          //  Serial.println(abs(_pid.geterror()));
+          // _steeringAngle = -correction;
+          testSteering.setAngle(-correction);
+    }
+}
 void runHardwareTests()
 {
 
@@ -326,13 +354,14 @@ void runHardwareTests()
 
   // test_motors();
   // test_steering();
-  test_forward();
+  // test_forward();
   // test_distance_sensors();
   // test_wire();
   // test_imu();
   // test_encoder();
   // test_TOF();
   // test_turn();
+  test_forward_with_static_speed();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");
   Serial.println("Reset device to run again.");
