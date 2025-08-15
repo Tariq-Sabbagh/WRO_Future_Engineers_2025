@@ -38,7 +38,7 @@ class ObstacleDetector:
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
         self.turn_detection_cooldown = Cooldown(6.0)
-        self.wide_roi_cooldown = Cooldown(4.0)
+        self.wide_roi_cooldown = Cooldown(3.5)
         self.movedPoint = 5
         self.first_turn_detected = False
         self.persistent_turn_direction = None
@@ -47,23 +47,23 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 0, 0]),
-                'upper': np.array([255, 175, 69]),
+                'lower': np.array([0, 154, 0]),
+                'upper': np.array([102, 255, 76]),
                 'offset_adjust': 20
             },
             'green': {
-                'lower': np.array([0, 0, 135]),
-                'upper': np.array([255, 113, 255]),
+                'lower': np.array([0, 0, 133]),
+                'upper': np.array([255, 123 , 255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([0, 120, 81]),
-                'upper': np.array([255, 149, 100]),
+                'lower': np.array([70, 127, 0]),
+                'upper': np.array([255, 154, 95]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 128, 138]),
-                'upper': np.array([119, 160, 252]),
+                'lower': np.array([0, 140, 140]),
+                'upper': np.array([118, 183, 255]),
                 'offset_adjust': -90
             }
         }
@@ -170,7 +170,7 @@ class ObstacleDetector:
             # Approximate contour to polygon and check for rectangle
             peri = cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
-            if len(approx) == 4:
+            if len(approx) >= 4 and len(approx)<=8:
                 valid_contours.append(contour)
 
         if not valid_contours:
@@ -221,7 +221,7 @@ class ObstacleDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 60:
+        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 70:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
@@ -265,9 +265,9 @@ class ObstacleDetector:
         """Capture and prepare a frame from camera"""
         frame = self.picam2.capture_array()
         frame = cv2.flip(frame, -1)
-        brightness = 3
-        contrast = 1.4
-        frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
+        # brightness = 3
+        # contrast = 1.8
+        # frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
         # h, w = frame.shape[:2]
 
         # # Replace these with your actual calibration values:
@@ -421,10 +421,10 @@ class ObstacleDetector:
         
         if not self.wide_roi_cooldown.ready():
         # Shrink the ROI to avoid false positives
-            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.15, 0.5, 0.8)
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.25, 0.07, 0.5, 0.8)
         else:
         # Full-size ROI
-            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.15, 0.8, 0.7)
+            obstacle_roi_rgb = self.crop_frame(frame_rgb, 0.1, 0.07, 0.8, 0.7)
 
         contours = self.detect_obstacles(obstacle_roi_rgb)
         dominant_color = self.find_dominant_obstacle(contours)

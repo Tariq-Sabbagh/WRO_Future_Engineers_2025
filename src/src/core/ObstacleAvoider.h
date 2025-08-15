@@ -14,8 +14,7 @@
 #include "MotorPID.h"
 #include "core/DistanceSensors.h"
 #include "core/TOFSensor.h"
-#include "core/OutParking.h"
-#include "core/OutParking.h"
+
 
 
 
@@ -25,33 +24,18 @@ public:
     ObstacleAvoider();
     void setup();
     void loop();
-    void attachHardware(MotorController* motors,
-                        Steering* servo,
-                        Button* button,
-                        Encoder* encoder,
-                        IMU* imu,
-                        TOFSensor* backSensor,
-                        DistanceSensors* ultra) 
-    {
-        _motors = motors;
-        _servo = servo;
-        _button = button;
-        _encoder = encoder;
-        _imu = imu;
-        _backSensor = backSensor;
-        _ultra = ultra;
-    }
+
    
 
 private:
     // Components
-    MotorController* _motors;
-    Steering* _servo;
-    IMU* _imu;
+    MotorController _motors;
+    Steering _servo;
+    IMU _imu;
     PIDController _pid;
-    Encoder* _encoder;
+    Encoder _encoder;
     SerialCommunicator _comm; // The new communicator object
-    Button* _button;
+    Button _button;
     Timer _timer;
     DistanceSensors _ultra;
     TOFSensor _backSensor;

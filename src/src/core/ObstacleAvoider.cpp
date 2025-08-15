@@ -22,6 +22,19 @@ float distance, angle, _forwardTarget = 0;
 int count_turn = 0;
 void ObstacleAvoider::setup()
 {
+    Wire.begin(); 
+    _motors.setup();
+    _servo.setup();
+    _button.setup();
+    _encoder.begin();
+    while (!_imu.setup()) {
+        Serial.println("FATAL: IMU failed to initialize.");
+    }
+
+    if (!_backSensor.begin()) {
+        Serial.println("TOF Sensor failed to init!");
+        while (1);
+    }
     _button.waitForPress();
 
     _pid.setup(3.5, 0, 0);
@@ -41,7 +54,7 @@ void ObstacleAvoider::_garageDoOut()
         _pid_target_parking = -_pid_target_parking;
     }
 
-    while (abs(_imu.getHeading()) <= 90)
+    while (abs(_imu.getHeading()) <= 100)
     {
 
         _imu.update();
@@ -49,7 +62,7 @@ void ObstacleAvoider::_garageDoOut()
         _servo.setAngle(-correction);
         _motors.move(FORWARD_SPEED);
     }
-    while (_ultra.getFrontCm() >= 37)
+    while (_ultra.getFrontCm() >= 35)
     {
         _imu.update();
         float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
@@ -58,7 +71,7 @@ void ObstacleAvoider::_garageDoOut()
     _encoder.reset();
     while (abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
     {
-        _motors.backward(FORWARD_SPEED);
+        _motors.backward(FORWARD_SPEED + 20);
         _encoder.update();
         _imu.update();
         float correction = _pid.compute(0, _imu.getHeading());
@@ -183,7 +196,7 @@ void ObstacleAvoider::_resetCar()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = correction;
-    _motors.move(-FORWARD_SPEED);
+    _motors.move(- (FORWARD_SPEED + 20));
     // Serial.println(_backSensor.readDistance());
     int distanceTOF = _backSensor.getDistance();
     // Serial.print("error:");
@@ -236,7 +249,7 @@ void ObstacleAvoider::_turn()
     _steeringAngle = -correction;
     // _motors.move(FORWARD_SPEED - 45);
     // Serial.println(_pid.geterror());
-    if (_ultra.getFrontCm() <= 35 and _pid.geterror() < abs(20))
+    if (_ultra.getFrontCm() <= 25 and _pid.geterror() < abs(20))
     {
         _forwardTarget += _comm.getTurn();
         _comm.resetTurn();
