@@ -43,8 +43,8 @@ void ObstacleAvoider::setup()
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
-    // _garageDoOut();
-    _garageDoIn();
+    _garageDoOut();
+    // _garageDoIn();
 
     _comm.clearSerialBuffer();
     Serial.println("Obstacle Avoider Initialized. Waiting for commands...");
