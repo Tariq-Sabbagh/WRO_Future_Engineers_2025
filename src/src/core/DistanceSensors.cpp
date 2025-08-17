@@ -8,18 +8,18 @@ DistanceSensors::DistanceSensors(int front_pin, int left_pin, int right_pin)
 }
 
 float DistanceSensors::getFrontCm() {
-    float med = median(_sonar_front);
-    return kalman(med, _kalman_front, _error_front);
+    // float med = median(_sonar_front);
+    return _sonar_front.ping_cm();
 }
 
 float DistanceSensors::getLeftCm() {
-    float med = median(_sonar_left);
-    return kalman(med, _kalman_left, _error_left);
+    // float med = median(_sonar_left);
+    return _sonar_left.ping_cm();
 }
 
 float DistanceSensors::getRightCm() {
-    float med = median(_sonar_right );
-    return kalman(med, _kalman_right, _error_right);
+    // float med = median(_sonar_right );
+    return _sonar_right.ping_cm();
 }
 
 float DistanceSensors::median(NewPing& sensor, int samples) {

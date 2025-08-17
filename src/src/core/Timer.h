@@ -8,8 +8,7 @@ public:
     void start(unsigned long duration_ms);
     bool isFinished();
     void reset();
-
-    static bool wait(unsigned long duration);  // Static wait function
+    static void wait(unsigned long duration);  // Static wait function
 
 private:
     unsigned long _startTime;

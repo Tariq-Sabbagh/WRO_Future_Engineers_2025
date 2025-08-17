@@ -9,7 +9,7 @@ public:
     void setup();
     bool isActive();   // Returns true if the button is pressed (active)
     bool isInactive(); // Returns true if the button is not pressed (inactive)
-    void waitForPress(); // Blocks code execution until button is pressed
+    void waitForPress(const char *message = ""); // Blocks code execution until button is pressed
 
 private:
     int _pin;
