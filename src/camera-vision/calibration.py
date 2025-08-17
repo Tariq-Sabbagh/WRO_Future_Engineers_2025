@@ -7,26 +7,15 @@ import pathlib
 import time
 import threading
 
-# If you're on Raspberry Pi with Picamera2, keep this import.
-# If you're testing on a laptop, replace picamera2 block with cv2.VideoCapture(0)
-from picamera2 import Picamera2
+from camera_module import Camera
 
 app = Flask(__name__)
 
 # -----------------------
 # Camera
 # -----------------------
-OPTIMIZED_RESOLUTION = (1280, 720)
 
-picam2 = Picamera2()
-config = picam2.create_preview_configuration(
-    main={"size": OPTIMIZED_RESOLUTION},
-    raw={"size": (2304, 1296)}
-)
-picam2.configure(config)
-# Exposure controls if you want; comment out if not needed
-# picam2.set_controls({"ExposureTime": 10000})
-picam2.start()
+camera = Camera()
 
 # -----------------------
 # File Path Setup
@@ -49,7 +38,7 @@ color_profiles = {
 }
 
 selected_color = "red"
-view_mode = "rgb"      # 'rgb', 'lab', 'l', 'a', 'b', 'mask', 'overlay'
+view_mode = "overlay"      # 'rgb', 'lab', 'mask', 'overlay'
 clahe_enabled = False
 app_mode = "live"
 current_image = None
@@ -111,11 +100,8 @@ def process_frame(frame):
     if view_mode == "rgb":
         out = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     elif view_mode == "lab":
-        lab_rgb = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-        out = cv2.cvtColor(lab_rgb, cv2.COLOR_BGR2RGB)
-    elif view_mode in ("l", "a", "b"):
-        ch = {"l": cv2.split(lab)[0], "a": cv2.split(lab)[1], "b": cv2.split(lab)[2]}[view_mode]
-        out = cv2.cvtColor(ch, cv2.COLOR_GRAY2RGB)
+        combined_mask = cv2.bitwise_and(mask, mask, mask=mask)
+        out = cv2.bitwise_and(frame, frame, mask=combined_mask)
     elif view_mode == "mask":
         out = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
     elif view_mode == "overlay":
@@ -123,7 +109,7 @@ def process_frame(frame):
         overlay = np.zeros_like(frame_rgb)
         color = overlay_rgb.get(selected_color, (255, 255, 255))
         overlay[mask > 0] = color
-        out = cv2.addWeighted(frame_rgb, 1.0, overlay, 0.5, 0)
+        out = cv2.addWeighted(frame_rgb, 1.0, overlay, 0.8, 0)
     else:
         out = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return out
@@ -160,7 +146,7 @@ def set_color():
 def set_view():
     global view_mode
     vm = request.form.get("view_mode", view_mode)
-    if vm in {"rgb","lab","l","a","b","mask","overlay"}:
+    if vm in {"rgb","lab","mask","overlay"}:
         view_mode = vm
     return ("", 204)
 
@@ -182,8 +168,7 @@ def set_mode():
 @app.route("/capture", methods=["POST"])
 def capture_image():
     global app_mode, current_image, view_mode
-    frame = picam2.capture_array()
-    frame = cv2.flip(frame, 0)
+    frame = camera.capture_frame()
     with image_lock:
         current_image = frame.copy()
     view_mode = "rgb"
@@ -239,7 +224,7 @@ def upload_image():
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         with image_lock:
             current_image = img
-        view_mode = "rgb"
+        view_mode = "overlay"
         app_mode = "image"
         return jsonify({
             "status": "uploaded",
@@ -331,8 +316,7 @@ def video_feed():
     def stream():
         while True:
             if app_mode == "live":
-                frame = picam2.capture_array()
-                frame = cv2.flip(frame, 0)
+                frame = camera.capture_frame()
                 out = process_frame(frame)
             else:
                 with image_lock:
@@ -494,14 +478,41 @@ HTML_PAGE = """
     }
     
     .slider-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    
-    .slider-group {
-      margin-bottom: 4px;
+
+    .channel-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: var(--button-bg);
+      border-radius: 8px;
     }
+
+    .channel-group label {
+      text-align: center;
+      margin: 0 0 8px 0;
+      font-weight: bold;
+    }
+
+    .slider-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: var(--slider-height);
+      -webkit-appearance: none;
+      background: var(--border-color);
+      border-radius: 4px;
+      margin: 4px 0;
+    }
+
     
     .slider-value {
       display: flex;
@@ -612,9 +623,6 @@ HTML_PAGE = """
         <select id="viewMode" onchange="onViewChange()">
           <option value="rgb" {% if view_mode=='rgb' %}selected{% endif %}>RGB</option>
           <option value="lab" {% if view_mode=='lab' %}selected{% endif %}>LAB</option>
-          <option value="l" {% if view_mode=='l' %}selected{% endif %}>L channel</option>
-          <option value="a" {% if view_mode=='a' %}selected{% endif %}>A channel</option>
-          <option value="b" {% if view_mode=='b' %}selected{% endif %}>B channel</option>
           <option value="mask" {% if view_mode=='mask' %}selected{% endif %}>Mask</option>
           <option value="overlay" {% if view_mode=='overlay' %}selected{% endif %}>Overlay</option>
         </select>
@@ -627,51 +635,61 @@ HTML_PAGE = """
 
       <div class="divider"></div>
 
-      <label>LAB Color Range:</label>
-      <div class="slider-container">
-        <div class="slider-group">
-          <label>L Min/Max</label>
-          <input type="range" name="l_min" min="0" max="255" value="{{ lab_range['l_min'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="l_min_val">{{ lab_range['l_min'] }}</span>
+      <form id="labForm">
+        <label>LAB Color Range:</label>
+        <div class="slider-container">
+          <div class="channel-group">
+            <label>L Channel</label>
+            <div class="slider-pair">
+              <div class="slider-value">
+                <span>Min: </span>
+                <span id="l_min_val">{{ lab_range['l_min'] }}</span>
+              </div>
+              <input type="range" name="l_min" min="0" max="255" value="{{ lab_range['l_min'] }}" oninput="updateSlider(this)">
+              
+              <div class="slider-value">
+                <span>Max: </span>
+                <span id="l_max_val">{{ lab_range['l_max'] }}</span>
+              </div>
+              <input type="range" name="l_max" min="0" max="255" value="{{ lab_range['l_max'] }}" oninput="updateSlider(this)">
+            </div>
           </div>
-          <input type="range" name="l_max" min="0" max="255" value="{{ lab_range['l_max'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="l_max_val">{{ lab_range['l_max'] }}</span>
+
+          <div class="channel-group">
+            <label>A Channel</label>
+            <div class="slider-pair">
+              <div class="slider-value">
+                <span>Min: </span>
+                <span id="a_min_val">{{ lab_range['a_min'] }}</span>
+              </div>
+              <input type="range" name="a_min" min="0" max="255" value="{{ lab_range['a_min'] }}" oninput="updateSlider(this)">
+              
+              <div class="slider-value">
+                <span>Max: </span>
+                <span id="a_max_val">{{ lab_range['a_max'] }}</span>
+              </div>
+              <input type="range" name="a_max" min="0" max="255" value="{{ lab_range['a_max'] }}" oninput="updateSlider(this)">
+            </div>
+          </div>
+
+          <div class="channel-group">
+            <label>B Channel</label>
+            <div class="slider-pair">
+              <div class="slider-value">
+                <span>Min: </span>
+                <span id="b_min_val">{{ lab_range['b_min'] }}</span>
+              </div>
+              <input type="range" name="b_min" min="0" max="255" value="{{ lab_range['b_min'] }}" oninput="updateSlider(this)">
+              
+              <div class="slider-value">
+                <span>Max: </span>
+                <span id="b_max_val">{{ lab_range['b_max'] }}</span>
+              </div>
+              <input type="range" name="b_max" min="0" max="255" value="{{ lab_range['b_max'] }}" oninput="updateSlider(this)">
+            </div>
           </div>
         </div>
-
-        <div class="slider-group">
-          <label>A Min/Max</label>
-          <input type="range" name="a_min" min="0" max="255" value="{{ lab_range['a_min'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="a_min_val">{{ lab_range['a_min'] }}</span>
-          </div>
-          <input type="range" name="a_max" min="0" max="255" value="{{ lab_range['a_max'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="a_max_val">{{ lab_range['a_max'] }}</span>
-          </div>
-        </div>
-
-        <div class="slider-group">
-          <label>B Min/Max</label>
-          <input type="range" name="b_min" min="0" max="255" value="{{ lab_range['b_min'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="b_min_val">{{ lab_range['b_min'] }}</span>
-          </div>
-          <input type="range" name="b_max" min="0" max="255" value="{{ lab_range['b_max'] }}" oninput="updateSlider(this)">
-          <div class="slider-value">
-            <span>0</span>
-            <span id="b_max_val">{{ lab_range['b_max'] }}</span>
-          </div>
-        </div>
-      </div>
-
+      </form>
       <div class="divider"></div>
 
       <div>
@@ -734,14 +752,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Update current_lab_range when sliders change
-function updateSlider(slider){
-  document.getElementById(slider.name + "_val").textContent = slider.value;
+function updateSlider(slider) {
+  const valueSpan = document.getElementById(`${slider.name}_val`);
+  if (valueSpan) {
+    valueSpan.textContent = slider.value;
+  }
+  
+  // Update the local copy
   current_lab_range[slider.name] = parseInt(slider.value);
-  fetch('/set_lab', {method:'POST', body: new FormData(document.getElementById('labForm'))});
+  
+  // Send the update to the server
+  const formData = new FormData();
+  formData.append(slider.name, slider.value);
+  fetch('/set_lab', {
+    method: 'POST',
+    body: formData
+  });
 }
 
 // When changing color, update lab_range and sliders
-function onColorChange(){
+function onColorChange() {
   const fd = new FormData();
   fd.append("color", document.getElementById("colorSelect").value);
   fetch("/set_color", {method:"POST", body:fd})
@@ -753,13 +783,13 @@ function onColorChange(){
 }
 
 // When changing view mode
-function onViewChange(){
+function onViewChange() {
   const fd = new FormData();
   fd.append("view_mode", document.getElementById("viewMode").value);
   fetch("/set_view", {method:"POST", body:fd});
 }
 
-function onClaheChange(){
+function onClaheChange() {
   const fd = new FormData();
   fd.append("enabled", document.getElementById("clahe").checked ? "true" : "false");
   fetch("/set_clahe", {method:"POST", body:fd});
@@ -815,7 +845,7 @@ function saveImage() {
   window.open("/save_image", "_blank");
 }
 
-function saveProfiles(){
+function saveProfiles() {
   const fn = document.getElementById("filename").value || "color_profiles.json";
   const fd = new FormData();
   fd.append("filename", fn);
@@ -852,6 +882,10 @@ function refreshProfileList() {
                   alert(`Loaded: ${file}`);
                   current_lab_range = data.lab_range;
                   syncSlidersToLabRange();
+                  // Update color select if the loaded profile has the current color
+                  if (data.loaded_colors.includes(document.getElementById("colorSelect").value)) {
+                    onColorChange();
+                  }
                 }
               });
           }

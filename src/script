@@ -7,8 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV="$SCRIPT_DIR/pip-venv/bin/activate"
 ESP32_DIR="$SCRIPT_DIR/esp32"
 CAMERA_VISION_DIR="$SCRIPT_DIR/camera-vision"
-PYTHON_SCRIPT="Obstacles.py"
-CALIBRATION_SCRIPT="calibrate-mouaaz.py"
+PYTHON_SCRIPT="main.py"
+CALIBRATION_SCRIPT="calibration.py"
 
 # Dynamically detect the USB port
 UPLOAD_PORT=$(ls /dev/ttyUSB* 2>/dev/null | head -n 1)

@@ -1,9 +1,10 @@
-import serial
+import serial # pyright: ignore[reportMissingModuleSource]
 import time
 import cv2
 import numpy as np
 import struct
-from picamera2 import Picamera2
+from camera_module import Camera
+
 
 from enum import Enum
 
@@ -47,71 +48,57 @@ class ObstacleDetector:
         # Color profiles
         self.COLOR_PROFILES = {
             'red': {
-                'lower': np.array([0, 161, 0]),
-                'upper': np.array([97, 255, 56]),
+                'lower': np.array([ 0,
+                163,
+                144]),
+                'upper': np.array([255,
+                216,
+                255]),
                 'offset_adjust': 15
             },
             'green': {
-                'lower': np.array([0, 0, 142]),
-                'upper': np.array([255, 118 , 255]),
+                'lower': np.array([0,
+                0,
+                121]),
+                'upper': np.array([252,
+                104,
+                255]),
                 'offset_adjust': -20
             },
             'orange': {
-                'lower': np.array([117, 120, 0]),
-                'upper': np.array([255, 160, 98]),
+                'lower': np.array([0,
+                109,
+                82]),
+                'upper': np.array([255,
+                171,
+                121]),
                 'offset_adjust': 90
             },
             'blue': {
-                'lower': np.array([0, 173, 118]),
-                'upper': np.array([255, 255, 255]),
+                'lower': np.array([194,
+                114,
+                155]),
+                'upper': np.array([255,
+                180,
+                255]),
                 'offset_adjust': -90
             }
         }
 
         # State variables
-        self.picam2 = None
+        self.camera = None
         self.arduino = None
 
         # Initialize hardware and calibration
         self.initialize_camera()
-        self.load_calibration()
 
         # Only initialize serial in production mode
         if self.mode is not OperationMode.CAMERA_ONLY:
             self.initialize_serial()
 
-    def load_calibration(self):
-        """Load and scale camera calibration data"""
-        calibration_data = np.load(self.CALIBRATION_FILE)
-        mtx = calibration_data['mtx']
-        dist = calibration_data['dist']
-
-        # Scale camera matrix
-        SCALE_X = self.OPTIMIZED_RESOLUTION[0] / 4608
-        SCALE_Y = self.OPTIMIZED_RESOLUTION[1] / 2592
-        self.mtx_scaled = mtx.copy()
-        self.mtx_scaled[0, 0] *= SCALE_X
-        self.mtx_scaled[1, 1] *= SCALE_Y
-        self.mtx_scaled[0, 2] *= SCALE_X
-        self.mtx_scaled[1, 2] *= SCALE_Y
-
-        # Precompute undistortion maps
-        self.map1, self.map2 = cv2.initUndistortRectifyMap(
-            self.mtx_scaled, dist, None, self.mtx_scaled,
-            self.OPTIMIZED_RESOLUTION,
-            cv2.CV_16SC2
-        )
-
     def initialize_camera(self):
         """Set up the camera hardware"""
-        self.picam2 = Picamera2()
-        config = self.picam2.create_preview_configuration(
-            main={"size": self.OPTIMIZED_RESOLUTION},
-            raw={"size": (2304, 1296)}
-        )
-        self.picam2.configure(config)
-        self.picam2.set_controls({"ExposureTime": 10000})
-        self.picam2.start()
+        self.camera = Camera()
         print("Camera initialized.")
 
     def initialize_serial(self):
@@ -263,26 +250,7 @@ class ObstacleDetector:
 
     def capture_frame(self):
         """Capture and prepare a frame from camera"""
-        frame = self.picam2.capture_array()
-        frame = cv2.flip(frame, -1)
-        brightness = 7
-        contrast = 2
-        frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
-        # h, w = frame.shape[:2]
-
-        # # Replace these with your actual calibration values:
-        # K = np.array([[800, 0, w/2],
-        #             [0, 800, h/2],
-        #             [0, 0, 1]])  # fx, fy, cx, cy (example values)
-
-        # D = np.array([-0.25, 0.1, 0, 0, 0])  # k1, k2, p1, p2, k3 (example values)
-
-        # # Get optimal camera matrix
-        # new_K, roi = cv2.getOptimalNewCameraMatrix(K, D, (w, h), alpha=0)
-
-        # # Undistort
-        # frame = cv2.undistort(frame, K, D, None, new_K)
-
+        frame = self.camera.capture_frame()
         return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     def detect_obstacles(self, frame_rgb):
@@ -461,8 +429,8 @@ class ObstacleDetector:
         except KeyboardInterrupt:
             print("\nStopping detection...")
         finally:
-            if self.picam2:
-                self.picam2.stop()
+            if self.camera:
+                self.camera.stop()
             if self.arduino:
                 self.arduino.close()
 
@@ -494,14 +462,9 @@ def create_flask_app(detector):
 
     @app.route('/')
     def index():
-        # Determine display size
-        width, height = (4608, 2592)
-        if detector.picam2 and 'PixelArraySize' in detector.picam2.camera_properties:
-            width, height = detector.picam2.camera_properties['PixelArraySize']
-
+        width, height = detector.camera.resolution
         display_width = 1280
         display_height = int(display_width * (height/width))
-
         return f"""
         <html>
         <head>
