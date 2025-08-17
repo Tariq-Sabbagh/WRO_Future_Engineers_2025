@@ -358,10 +358,10 @@ void runHardwareTests()
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  // test_encoder();
+  test_encoder();
   // test_TOF();
   // test_turn();
-  test_forward_with_static_speed();
+  // test_forward_with_static_speed();
 
   Serial.println("\n===== ALL TESTS COMPLETE =====");
   Serial.println("Reset device to run again.");

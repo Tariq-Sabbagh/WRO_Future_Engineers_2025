@@ -69,7 +69,7 @@ def video_feed():
             frame = picam2.capture_array()
             frame = cv2.flip(frame, -1)
             brightness = 7
-            contrast = 2
+            contrast = 1.7
             frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness)
 
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
@@ -106,6 +106,7 @@ def video_feed():
             # Apply the combined mask
             result = cv2.bitwise_and(frame, frame, mask=combined_mask)
 
+            result = cv2.cvtColor(result, cv2.COLOR_LAB2RGB)
             _, buffer = cv2.imencode('.jpg', result)
             frame_bytes = buffer.tobytes()
 

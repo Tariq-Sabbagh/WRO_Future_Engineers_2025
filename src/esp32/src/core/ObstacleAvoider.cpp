@@ -1,6 +1,6 @@
 #include "ObstacleAvoider.h"
 
-ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN,&_encoder),
+ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN, &_encoder),
                                      _servo(SERVO_PIN),
                                      _imu(),
                                      _pid(),
@@ -22,25 +22,29 @@ float distance, angle, _forwardTarget = 0;
 int count_turn = 0;
 void ObstacleAvoider::setup()
 {
-    Wire.begin(); 
+    Wire.begin();
     _motors.setup();
     _servo.setup();
     _button.setup();
     _encoder.begin();
-    while (!_imu.setup()) {
+    while (!_imu.setup())
+    {
         Serial.println("FATAL: IMU failed to initialize.");
     }
 
-    if (!_backSensor.begin()) {
+    if (!_backSensor.begin())
+    {
         Serial.println("TOF Sensor failed to init!");
-        while (1);
+        while (1)
+            ;
     }
     _button.waitForPress();
 
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
-    _garageDoOut();
+    // _garageDoOut();
+    _garageDoIn();
 
     _comm.clearSerialBuffer();
     Serial.println("Obstacle Avoider Initialized. Waiting for commands...");
@@ -51,16 +55,16 @@ void ObstacleAvoider::_garageDoOut()
     if (_ultra.getLeftCm() < _ultra.getRightCm())
 
     {
-        _pid_target_parking = -_pid_target_parking;
+        _pid_target_parking = -_pid_target_parking * 0.9;
     }
 
-    while (abs(_imu.getHeading()) <= 100)
+    while (abs(_imu.getHeading()) <= 90)
     {
 
         _imu.update();
         float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
         _servo.setAngle(-correction);
-        _motors.move(FORWARD_SPEED);
+        _motors.move(190);
     }
     while (_ultra.getFrontCm() >= 35)
     {
@@ -71,7 +75,7 @@ void ObstacleAvoider::_garageDoOut()
     _encoder.reset();
     while (abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
     {
-        _motors.backward(FORWARD_SPEED );
+        _motors.backward(FORWARD_SPEED);
         _encoder.update();
         _imu.update();
         float correction = _pid.compute(0, _imu.getHeading());
@@ -85,45 +89,63 @@ void ObstacleAvoider::_garageDoOut()
 void ObstacleAvoider::_garageDoIn()
 {
 
+    _motors.move(FORWARD_SPEED * 0.9);
+    while (_ultra.getLeftCm() > 15 || _ultra.getRightCm() > 15)
+
+    {
+
+        if (_ultra.getLeftCm() < 15 || _ultra.getRightCm() < 15)
+            break;
+    }
+
     if (_ultra.getLeftCm() < _ultra.getRightCm())
 
     {
+
         Serial.println(_ultra.getLeftCm());
-        _pid_target_parking = -_pid_target_parking;
+        _pid_target_parking_In = -_pid_target_parking_In;
     }
+
 
     while (abs(_imu.getHeading()) <= 80)
     {
 
         _imu.update();
-        _servo.setAngle(-_pid_target_parking * 0.4);
-        _motors.move(FORWARD_SPEED * 0.8);
+        float correction = _pid.compute(_pid_target_parking_In, _imu.getHeading());
+        _servo.setAngle(-correction);
+        _motors.move(190);
     }
-    _motors.stopBreak(-1);
-
-    while (_ultra.getFrontCm() <= 50)
+    // _motors.stopBreak(-1);
+     while ( _encoder.getDistanceCm() < 10)
     {
-        Serial.println(_ultra.getFrontCm());
-        Serial.println(_backSensor.getDistance());
-
-        _imu.update();
+       
         float correction = _pid.compute(0, _imu.getHeading());
-        _servo.setAngle(0);
-        _motors.move(-FORWARD_SPEED * 0.9);
+        _servo.setAngle(correction);
     }
 
-    while (abs(_imu.getHeading()) >= 5)
-    {
-        // Serial.println(abs(_imu.getHeading()));
+    // while (_ultra.getFrontCm() <= 50)
+    // {
+    //     Serial.println(_ultra.getFrontCm());
+    //     Serial.println(_backSensor.getDistance());
 
-        _imu.update();
-        _servo.setAngle(-_pid_target_parking);
-        _motors.move(-FORWARD_SPEED * 0.9);
-    }
+    //     _imu.update();
+    //     float correction = _pid.compute(0, _imu.getHeading());
+    //     _servo.setAngle(0);
+    //     _motors.move(-FORWARD_SPEED * 0.95);
+    // }
+
+    // while (abs(_imu.getHeading()) > 10)
+    // {
+    //     Serial.println(abs(_imu.getHeading()));
+
+    //     _imu.update();
+    //     _servo.setAngle(-_pid_target_parking_In);
+    //     _motors.move(-FORWARD_SPEED * 0.9);
+    // }
     _servo.center();
 
     _motors.stopBreak(-1);
- 
+
     //  _goForwardPID(50);
 }
 
@@ -161,7 +183,7 @@ void ObstacleAvoider::loop()
         //     _goBackward();
         //     break;
     }
-   
+
     if (count_turn >= 12)
     {
         _motors.stop();
@@ -196,7 +218,7 @@ void ObstacleAvoider::_resetCar()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = correction;
-    _motors.move(- (FORWARD_SPEED ));
+    _motors.move(-(FORWARD_SPEED));
     // Serial.println(_backSensor.readDistance());
     int distanceTOF = _backSensor.getDistance();
     // Serial.print("error:");
@@ -274,7 +296,7 @@ void ObstacleAvoider::_goBackward()
 
 void ObstacleAvoider::_goForward()
 {
-     _get_away_walls();
+    _get_away_walls();
     if (_comm.getManeuverValues(distance, angle) and abs(_pid.geterror()) < 30)
     {
         _encoder.reset();

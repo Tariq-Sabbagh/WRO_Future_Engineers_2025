@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Get the directory of the current script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Define constants for paths and environment
+VENV="$SCRIPT_DIR/pip-venv/bin/activate"
+ESP32_DIR="$SCRIPT_DIR/esp32"
+CAMERA_VISION_DIR="$SCRIPT_DIR/camera-vision"
+PYTHON_SCRIPT="Obstacles.py"
+CALIBRATION_SCRIPT="calibrate-mouaaz.py"
+
+# Dynamically detect the USB port
+UPLOAD_PORT=$(ls /dev/ttyUSB* 2>/dev/null | head -n 1)
+
+# Check if the USB port is found
+if [ -z "$UPLOAD_PORT" ]; then
+    echo "ERROR: No /dev/ttyUSB device found."
+    exit 1
+fi
+
+# Function to activate virtual environment
+function activate_virtualenv() {
+    source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
+}
+
+# Function to upload firmware
+function upload_firmware() {
+    activate_virtualenv
+    cd "$ESP32_DIR" || exit 1
+    platformio run -e esp32dev --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+# Function to monitor device
+function monitor_device() {
+    activate_virtualenv
+    cd "$ESP32_DIR" || exit 1
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+# Function to run camera script
+function run_camera_script() {
+    activate_virtualenv
+    cd "$CAMERA_VISION_DIR" || exit 1
+    python "$PYTHON_SCRIPT" --serial "$UPLOAD_PORT" "${@:2}"
+}
+
+# Function to run calibration script
+function run_calibration() {
+    activate_virtualenv
+    cd "$CAMERA_VISION_DIR" || exit 1
+    python "$CALIBRATION_SCRIPT"
+}
+
+# Function for test mode upload
+function upload_test_mode() {
+    activate_virtualenv
+    cd "$ESP32_DIR" || exit 1
+    echo "Uploading firmware in TEST MODE..."
+    platformio run -e esp32dev-test --target upload --upload-port "$UPLOAD_PORT" && \
+    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
+}
+
+# Main case statement to handle command line arguments
+case "$1" in
+    upload)
+        upload_firmware
+        ;;
+    monitor)
+        monitor_device
+        ;;
+    camera)
+        run_camera_script "$@"
+        ;;
+    calibrate)
+        run_calibration
+        ;;
+    test)
+        upload_test_mode
+        ;;
+    *)
+        echo "Usage: $0 {camera|upload|monitor|calibrate|test} [args...]"
+        exit 1
+        ;;
+esac
