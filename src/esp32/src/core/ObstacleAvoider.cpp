@@ -200,11 +200,11 @@ void ObstacleAvoider::_get_away_walls()
     const float k = 1.2;
     if (right <= 40 and right != 0)
     {
-        _steeringAngle += k * (25 - right);
+        _steeringAngle += k * (40 - right);
     }
     if (left <= 40 and left != 0)
     {
-        _steeringAngle -= k * (25 - left);
+        _steeringAngle -= k * (40 - left);
     }
 }
 void ObstacleAvoider::_stopUntilTimer()

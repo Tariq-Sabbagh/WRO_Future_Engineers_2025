@@ -4,7 +4,7 @@ import numpy as np
 from picamera2 import Picamera2
 
 class Camera:
-    def __init__(self, resolution=(1280, 720), flip=True, brightness=7, contrast=1):
+    def __init__(self, resolution=(1280, 720), flip=True, brightness=7, contrast=1.2):
         self.resolution = resolution
         self.flip = flip
         self.brightness = brightness

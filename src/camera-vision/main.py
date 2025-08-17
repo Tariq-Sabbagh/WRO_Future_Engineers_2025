@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import struct
 from camera_module import Camera
+import json
+from pathlib import Path
 
 
 from enum import Enum
@@ -31,8 +33,7 @@ class ObstacleDetector:
         self.mode = mode
         self.SERIAL_PORT = serial_port
         self.BAUDRATE = 115200
-        self.CALIBRATION_FILE = "calibration_data.npz"
-        self.OPTIMIZED_RESOLUTION = (1280, 720)
+        self.PROFILES_FILE = "color_profiles.json"
         self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
         self.FOCAL_LENGTH = 570.0
         self.MAX_AREA = 3000.0
@@ -44,47 +45,6 @@ class ObstacleDetector:
         self.first_turn_detected = False
         self.persistent_turn_direction = None
 
-
-        # Color profiles
-        self.COLOR_PROFILES = {
-            'red': {
-                'lower': np.array([ 0,
-                163,
-                144]),
-                'upper': np.array([255,
-                216,
-                255]),
-                'offset_adjust': 15
-            },
-            'green': {
-                'lower': np.array([0,
-                0,
-                121]),
-                'upper': np.array([252,
-                104,
-                255]),
-                'offset_adjust': -20
-            },
-            'orange': {
-                'lower': np.array([0,
-                109,
-                82]),
-                'upper': np.array([255,
-                171,
-                121]),
-                'offset_adjust': 90
-            },
-            'blue': {
-                'lower': np.array([194,
-                114,
-                155]),
-                'upper': np.array([255,
-                180,
-                255]),
-                'offset_adjust': -90
-            }
-        }
-
         # State variables
         self.camera = None
         self.arduino = None
@@ -95,6 +55,52 @@ class ObstacleDetector:
         # Only initialize serial in production mode
         if self.mode is not OperationMode.CAMERA_ONLY:
             self.initialize_serial()
+            
+        # Color profiles
+        self.COLOR_PROFILES = {}
+        self.load_color_profiles()
+
+    def load_color_profiles(self, filename=None):
+        if filename is None:
+            filename = self.PROFILES_FILE
+        filename = "saved_profiles/" + filename
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            profiles = data.get("profiles", {})
+            for color, p in profiles.items():
+                self.COLOR_PROFILES[color] = {
+                    'lower': np.array(p['lower']),
+                    'upper': np.array(p['upper']),
+                    'offset_adjust': p['offset_adjust']
+                }
+            print(f"Loaded color profiles from {filename}")
+        except Exception as e:
+            print("\033[1;31m" + "WARNING: Color profile file '{}' not found! Falling back to default profiles.".format(self.PROFILES_FILE) + "\033[0m")
+            print(f"Error loading color profiles: {e}. Using default profiles.")
+            # Fallback to hardcoded defaults
+            self.COLOR_PROFILES = {
+                'red': {
+                    'lower': np.array([0, 163, 144]),
+                    'upper': np.array([255, 216, 255]),
+                    'offset_adjust': 20
+                },
+                'green': {
+                    'lower': np.array([0, 0, 121]),
+                    'upper': np.array([252, 104, 255]),
+                    'offset_adjust': -20
+                },
+                'orange': {
+                    'lower': np.array([0, 109, 82]),
+                    'upper': np.array([255, 171, 121]),
+                    'offset_adjust': 90
+                },
+                'blue': {
+                    'lower': np.array([194, 114, 155]),
+                    'upper': np.array([255, 180, 255]),
+                    'offset_adjust': -90
+                }
+            }
 
     def initialize_camera(self):
         """Set up the camera hardware"""
@@ -345,7 +351,7 @@ class ObstacleDetector:
                             (10, debug_positions[color]), cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (255, 255, 255), 2)
     
-            if pixel_ratio > 0.05:
+            if pixel_ratio > 0.1:
                 turn_detected = turn_map[color]
                 print(f"TURN DETECTED: {turn_detected}")
     
