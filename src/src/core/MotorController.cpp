@@ -8,6 +8,7 @@ MotorController::MotorController(int dir1_pin, int dir2_pin, int speed_pin) {
 }
 
 void MotorController::setup() {
+    Serial.println("Setting up Motors....");
     pinMode(_dir1_pin, OUTPUT);
     pinMode(_dir2_pin, OUTPUT);
     pinMode(_speed_pin,OUTPUT);
@@ -17,13 +18,13 @@ void MotorController::setup() {
 void MotorController::forward(int speed) {
     digitalWrite(_dir1_pin, LOW);
     digitalWrite(_dir2_pin, HIGH);
-    analogWrite(_speed_pin, FORWARD_SPEED);
+    analogWrite(_speed_pin, speed);
 }
 
 void MotorController::backward(int speed) {
     digitalWrite(_dir1_pin, HIGH);
     digitalWrite(_dir2_pin, LOW);
-    analogWrite(_speed_pin, FORWARD_SPEED);
+    analogWrite(_speed_pin, speed);
 }
 
 void MotorController::stop() {

@@ -1,7 +1,8 @@
 #include "core/Car.h"
 #include <Wire.h> 
+#include "core/ObstacleAvoider.h"
 
-// #define RUN_TESTS
+#define RUN_TESTS
 
 #ifdef RUN_TESTS
   #include "test/Tests.h"
@@ -9,6 +10,8 @@
 
 // Create our main car object
 Car myCar;
+
+ObstacleAvoider robot;
 
 //==============================================================================
 // ARDUINO SETUP
@@ -23,7 +26,8 @@ void setup() {
     runHardwareTests(); // This function will loop forever, running tests.
   #else
     Serial.println("--- Running in Normal Operation Mode ---");
-    myCar.setup();
+    // myCar.setup();
+    robot.setup();
   #endif
 }
 
@@ -35,6 +39,7 @@ void loop() {
     // In test mode, all logic is in setup(), so the loop does nothing.
   #else
     // In normal mode, we run the car's main logic loop.
-    myCar.loop();
+    // myCar.loop();
+    robot.loop();
   #endif
 }
