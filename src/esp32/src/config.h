@@ -31,6 +31,7 @@ const int MOTOR_PWM_CHANNEL = 1;
 const int MOTOR_PWM_FREQ = 30000;
 const int MOTOR_PWM_RESOLUTION = 8;
 const int FORWARD_SPEED = 200; // Speed value from 0-255
+const int BACKWARD_SPEED = -200;
 
 // -- Steering Control --
 const int SERVO_CENTER_ANGLE = 90; // The exact angle that makes your servo point straight.
