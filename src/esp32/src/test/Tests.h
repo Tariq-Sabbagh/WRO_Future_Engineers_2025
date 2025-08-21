@@ -355,10 +355,10 @@ void runHardwareTests()
   // test_motors();
   // test_steering();
   // test_forward();
-  test_distance_sensors();
+  // test_distance_sensors();
   // test_wire();
   // test_imu();
-  // test_encoder();
+  test_encoder();
   // test_TOF();
   // test_turn();
   // test_forward_with_static_speed();

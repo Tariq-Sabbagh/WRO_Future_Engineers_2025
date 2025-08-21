@@ -53,7 +53,8 @@ private:
         IDLE,
         BACKWARD,
         TURN,
-        RESET
+        RESET,
+        GARAGE
     };
 
     State _currentState;

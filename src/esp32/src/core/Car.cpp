@@ -1,157 +1,152 @@
-// #include "Car.h"
+#include "Car.h"
 
-// Car::Car() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
-//              _steering(SERVO_PIN),
-//              _distSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
-//              _imu(),
-//              _button(BUTTON_PIN),
-//              _pid(),
-//              _encoder()
-// {
-//     // direction = "straight";
-// }
+Car::Car() :
+    _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
+    _steering(SERVO_PIN),
+    _distSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
+    _imu(),
+    _button(BUTTON_PIN),
+    _pid()  // Initialize PID controller
+{
+    // Initialize state variables
+    _offsetGyro = 0.0f;
+    _turnCounter = 0;
+    _previousTurnMillis = 0;
+    error = 0.0f;
+    angle = 0.0f;
+    direction = "straight";
+}
 
-// void Car::setup()
-// {
-  
-//     _motors.setup();
-//     _steering.setup();
-//     _button.setup();
-//     _encoder.begin();
+void Car::setup() {
+    // Setup all hardware components
+    _motors.setup();
+    _steering.setup();
+    _button.setup();
+    
+    // Configure PID controller
+    _pid.setup(STEERING_KP, 0, 0);
+    _pid.setOutputLimits(-90,90);
+    
+    if (!_imu.setup()) {
+        // If IMU fails, halt everything.
+        _stopAndHalt();
+    }
 
-//     _pid.setup(STEERING_KP, 0, 0);
-//     _pid.setOutputLimits(-90, 90);
+    Serial.println("All components initialized.");
+    Serial.println("Press the button to start calibration and run...");
 
-//     if (!_imu.setup())
-//     {
-//         Serial.println("IMU failed.");
-//         _stopAndHalt();
-//     }
+    _button.waitForPress(); // Wait for the start button
+    Serial.println("Button pressed! Calibrating...");
+    // Timer::wait(1500);
+    
+    _imu.update(); // Get initial reading
+    _offsetGyro = _imu.getHeading(); // Set initial offset
+    _previousTurnMillis = millis(); // Initialize turn timer
 
-//     Serial.println("All components initialized.");
-//     Serial.println("Press the button to start...");
+    Serial.println("Calibration complete. Starting main loop.");
+}
 
-//     _button.waitForPress();
-//     Serial.println("Button pressed! Calibrating...");
+void Car::loop() {
+    _imu.update(); // Always get the latest sensor data first
+    
+    _checkForTurns();   // Check for turn conditions
+    _moveStraight();    // Main movement with PID steering
 
-//     _imu.update();
-//     _previousTurnMillis = millis();
+    // Check for end condition
+    if (_turnCounter >= 12) {
+        if (millis() - _previousTurnMillis >= 1000) {
+            _stopAndHalt();
+        }
+    }
+}
 
-//     Serial.println("Calibration complete. Starting course...");
-// }
+void Car::_moveStraight() {
+    // Normalize gyro offset
+    if (_offsetGyro >= 360) _offsetGyro = 0;
+    else if (_offsetGyro < 0) _offsetGyro += 360;
 
-// void Car::loop()
-// {
-//     _runCourse(); // Start the main course logic
-//     _stopAndHalt();
-//     // Not used in this structure
-// }
+    // Calculate current heading relative to offset
+    float currentHeading = _imu.getHeading() - _offsetGyro;
 
-// // ---------- COURSE LOGIC ----------
+    // Normalize heading to [-180, 180] range
+    if (currentHeading > 180) currentHeading -= 360;
+    else if (currentHeading < -180) currentHeading += 360;
 
-// void Car::_runCourse()
-// {
-//     for (int lab = 0; lab < _totalLabs; lab++)
-//     {
-//         Serial.print("Starting lab ");
-//         Serial.println(lab + 1);
-//         _runLab();
-//     }
-// }
+    // Store error for turn decision logic
+    error = currentHeading;
 
-// void Car::_runLab()
-// {
-//     for (int segment = 0; segment < 1; segment++)
-//     {
-//         Serial.print("Starting segment ");
-//         Serial.println(segment + 1);
-//         _goUntilTurn();
-//         _decideAndTurn();
-//     }
-       
-// }
+    Serial.println("Error: ");
+    Serial.println(error);
 
-// void Car::_goUntilTurn()
-// {
-//     _imu.reset();
-//     while (true)
-//     {
-//          _imu.update();
-//         _moveStraight();
-//         if (_empty_on_left() or _empty_on_right())
-//         {
-//             // Serial.println("Wall detected. Stopping.");
-//             break;
-//         }
-//     }
-// }
+    
+    // Use PID controller for precise steering
+    float steeringCorrection = _pid.compute(0, currentHeading);
 
-// void Car::_decideAndTurn()
-// {
+    Serial.println("Correction: ");
+    Serial.println(steeringCorrection);
+    _steering.setAngle(-steeringCorrection);
+    
+    // Maintain forward motion
+    _motors.forward(FORWARD_SPEED);
+}
 
-//     if (_empty_on_left())
-//         _turn(90);
-//     else if (_empty_on_right())
-//         _turn(-90);
-// }
+void Car::_checkForTurns() {
+    // Check turn cooldown and max turns
+    unsigned long currentMillis = millis();
+    if (currentMillis - _previousTurnMillis < TURN_COOLDOWN_MS || _turnCounter >= 12) {
+        return;
+    }
 
-// void Car::_turn(float angle)
-// {
+    // Only consider turns when reasonably aligned
+    if (abs(error) < 15) {
+        // First turn decision logic
+        if (_turnCounter < 1) {
+            _turnLeft();
+            // _turnRight();
+        } 
+        // Subsequent turns based on pattern
+        else if (direction == "right") {
+            _turnRight();
+        } 
+        else if (direction == "left") {
+            _turnLeft();
+        }
+    }
+}
 
-//     while (true)
-//     {
-//         _imu.update();
-//         float currentHeading = _imu.getHeading();
+void Car::_turnRight() {
+    float frontDist = _distSensors.getFrontCm();
+    if (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) {
+        float rightDist = _distSensors.getRightCm();
+        if (rightDist >= TURN_CLEARANCE_DISTANCE_CM || rightDist == 0) {
+            direction = "right";
+            Serial.println(">>> Turning RIGHT");
+            _previousTurnMillis = millis();
+            _turnCounter++;
+            _offsetGyro += 90.0f;
+            _pid.reset();  
+        }
+    }
+}
 
-//         if (abs(currentHeading - angle) < 0.1f)
-//             break;
+void Car::_turnLeft() {
+    float frontDist = _distSensors.getFrontCm();
+    if (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) {
+        float leftDist = _distSensors.getLeftCm();
+        if (leftDist >= TURN_CLEARANCE_DISTANCE_CM || leftDist == 0) {
+            direction = "left";
+            Serial.println(">>> Turning LEFT");
+            _previousTurnMillis = millis();
+            _turnCounter++;
+            _offsetGyro -= 90.0f;
+            _pid.reset();  // Reset PID after turn
+        }
+    }
+}
 
-//         float correction = _pid.compute(angle, currentHeading);
-//         _steering.setAngle(-correction);
-//         _motors.forward(FORWARD_SPEED - 50);
-//     }
-// }
-
-// // ---------- MOVEMENT & CONTROL ----------
-
-// void Car::_moveStraight()
-// {
-//     float currentHeading = _imu.getHeading();
-//     error = currentHeading - 0;
-//     Serial.println("Error: ");
-//     Serial.println(error);
-
-//     float correction = _pid.compute(0, currentHeading);
-
-//     _steering.setAngle(-correction);
-//     _motors.forward(FORWARD_SPEED);
-// }
-
-// // ---------- TURNING ----------
-
-// bool Car::_empty_on_right()
-// {
-//     float frontDist = _distSensors.getFrontCm();
-//     float rightDist = _distSensors.getRightCm();
-//     return (abs(_imu.getHeading()) < 15) and (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) and
-//            (rightDist > 1 && rightDist <= TURN_CLEARANCE_DISTANCE_CM);
-// }
-
-// bool Car::_empty_on_left()
-// {
-//     float frontDist = _distSensors.getFrontCm();
-//     float leftDist = _distSensors.getLeftCm();
-//     return (abs(_imu.getHeading()) < 15) and (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) and
-//            (leftDist > 1 && leftDist <= TURN_CLEARANCE_DISTANCE_CM);
-// }
-
-// // ---------- SAFETY ----------
-
-// void Car::_stopAndHalt()
-// {
-//     _motors.stop();
-//     _steering.center();
-//     Serial.println("Execution halted after completing course.");
-//     while (true)
-//         ; // Halt
-// }
+void Car::_stopAndHalt() {
+    _motors.stop();
+    _steering.center();
+    Serial.println("Execution halted after completing route.");
+    while (true); // Safety halt
+}
