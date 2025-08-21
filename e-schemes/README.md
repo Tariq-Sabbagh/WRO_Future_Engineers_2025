@@ -244,6 +244,8 @@ Even with careful assembly, robotics projects like this car may encounter common
 - **Cause:** Reflective surfaces or ambient light interference.  
 - **Solution:** Avoid highly reflective surfaces, calibrate sensor for the specific environment.
 
+
+
 ### 10. PCB Power Issues
 - **Cause:** Overloaded step-down regulator or loose connections.  
 - **Solution:** Check current ratings, ensure proper soldering, and verify LM2596 output voltage.
