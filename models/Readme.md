@@ -47,21 +47,21 @@ Given the motor speed and wheel diameter, we calculate top speed:
 ---
 
 ## 4. Power Calculation
-- Motor torque: \(T_\text{motor} = 0.49~\text{N·m}\)  
-- Motor angular velocity: \(\omega_\text{motor} = 29.41~\text{rad/s}\)  
+- Motor torque: \(T_\{motor} = 0.49~\{N·m}\)  
+- Motor angular velocity: \(\omega_\{motor} = 29.41~\{rad/s}\)  
 
  
 **At the wheels (after gear ratio):**
-- Torque: \(T_\text{wheel} = \frac{0.49}{2.2} \approx 0.223~\text{N·m}\)  
-- Angular velocity: \(\omega_\text{wheel} = 29.41 \times 2.2 \approx 64.7~\text{rad/s}\)  
-- Power: \(P_\text{wheel} = 0.223 \times 64.7 \approx 14.4~\text{W}\)  
+- Torque: \(T_\{wheel} = \frac{0.49}{2.2} \approx 0.223~\{N·m}\)  
+- Angular velocity: \(\omega_\{wheel} = 29.41 \times 2.2 \approx 64.7~\{rad/s}\)  
+- Power: \(P_\{wheel} = 0.223 \times 64.7 \approx 14.4~\{W}\)  
 
  
 ---
 
 ## 5. Torque & Linear Force
-- Wheel radius: \(r = 0.0295~\text{m}\)  
-- Torque at wheels: \(T_\text{wheel} = 0.223~\text{N·m}\)  
+- Wheel radius: \(r = 0.0295~\{m}\)  
+- Torque at wheels: \(T_\{wheel} = 0.223~\{N·m}\)  
 
 ---
 
