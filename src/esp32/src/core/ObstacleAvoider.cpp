@@ -20,8 +20,8 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
 }
 float distance, angle, _forwardTarget = 0;
 int count_turn = 0;
-bool turn_right =true;
-bool backward =false;
+bool turn_right = true;
+bool backward = false;
 void ObstacleAvoider::setup()
 {
     Wire.begin();
@@ -45,7 +45,7 @@ void ObstacleAvoider::setup()
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
-    _garageDoOut();
+    // _garageDoOut();
     // _garageDoIn();
 
     _comm.clearSerialBuffer();
@@ -59,7 +59,6 @@ void ObstacleAvoider::_garageDoOut()
     {
         _pid_target_parking = -_pid_target_parking * 0.9;
         turn_right = true;
-
     }
 
     while (abs(_imu.getHeading()) <= 85)
@@ -87,96 +86,206 @@ void ObstacleAvoider::_garageDoOut()
     }
 
     _motors.stop();
-
-    //  _goForwardPID(50);
 }
 void ObstacleAvoider::_garageDoIn()
 {
-    int motorSpeedGarage = 190;
- 
-    if(turn_right and _ultra.getLeftCm() >= 50)
+    ////// reset from tariq
+
+    int motorSpeedGarage = 210;
+    int wall_garage_distance=18;
+    int wall_garage_degree =65;
+    int angle_90 =90;
+    if (turn_right and _ultra.getLeftCm() >= 50)
     {
         while (true)
         {
             _imu.update();
-       float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
-        _steeringAngle = correction;
-        _servo.setAngle(_steeringAngle);
-        if(!backward)
+            float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+            _steeringAngle = correction;
+            _servo.setAngle(_steeringAngle);
+            if (!backward)
             {
                 _motors.move(-255);
                 _timer.wait(600);
-                backward=true;
+                backward = true;
                 Serial.println("_______________________________________");
             }
-        _motors.move(BACKWARD_SPEED);
-        int distanceTOF = _backSensor.getDistance();
-        if (distanceTOF <= 350 and abs(_pid.geterror()) < 15)
-        {
-            _forwardTarget -= 90;
-            backward=false;
-            break;
-        }  
+            _motors.move(BACKWARD_SPEED);
+            int distanceTOF = _backSensor.getDistance();
+            if (distanceTOF <= 250 and abs(_pid.geterror()) < 15)
+            {
+                _forwardTarget -= 90;
+                backward = false;
+                break;
+            }
         }
         while (true)
         {
-        _imu.update();
-        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
-        _steeringAngle = -correction;
-        _servo.setAngle(_steeringAngle);
-        if(!backward)
+            _imu.update();
+            float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+            _steeringAngle = -correction;
+            _servo.setAngle(_steeringAngle);
+            if (!backward)
             {
                 _motors.move(255);
                 _timer.wait(400);
-                backward=true;
+                backward = true;
                 Serial.println("_______________________________________");
             }
-        _motors.move(motorSpeedGarage);
-        if(_ultra.getFrontCm() <=20 and abs(_pid.geterror()) < 25)
-        {
-            _forwardTarget += 90;
-            break;
-        }
+            _motors.move(motorSpeedGarage);
+            if (_ultra.getFrontCm() <= 20 and abs(_pid.geterror()) < 25)
+            {
+                _forwardTarget += 90;
+                break;
+            }
         }
 
         while (true)
         {
+            _imu.update();
+            float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+            _steeringAngle = -correction;
+            _servo.setAngle(_steeringAngle);
+
+            if (_ultra.getFrontCm() <= wall_garage_distance+2 and abs(_pid.geterror()) < 25)
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        while (true)
+        {
+            _imu.update();
+            float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+            _steeringAngle = -correction;
+            _servo.setAngle(_steeringAngle);
+            _motors.forward(motorSpeedGarage);
+            if (_ultra.getFrontCm() <= wall_garage_distance+2 and abs(_pid.geterror()) <= 25)
+            {
+                break;
+            }
+        }
+    }
+
+
+
+    if(!turn_right){
+         wall_garage_degree = -wall_garage_degree;
+     angle_90 =-angle_90;
+    }
+    _motors.stopBreak(-1);
+
+
+     //// reset distance from front
+    while (_ultra.getFrontCm() <= wall_garage_distance)
+    {
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+        _steeringAngle = correction;
+        _servo.setAngle(_steeringAngle);
+        _motors.backward(motorSpeedGarage );
+    }
+    // avoid the wall
+    _forwardTarget += wall_garage_degree;
+
+    while (true)
+    {
         _imu.update();
         float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
         _steeringAngle = -correction;
         _servo.setAngle(_steeringAngle);
-
-        if(_ultra.getFrontCm() <=15 and abs(_pid.geterror()) < 25)
+        _motors.forward(motorSpeedGarage);
+        if (abs(_pid.geterror()) <= 10)
         {
             break;
         }
-        }
-        
-        
     }
-    else{
-while (true)
-{
-    _imu.update();
-    float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
-    _steeringAngle = -correction;
-    _servo.setAngle(_steeringAngle);
-    _motors.forward(motorSpeedGarage);
-    if(_ultra.getFrontCm()<=15 and abs(_pid.geterror())<=25)
+    _forwardTarget -= wall_garage_degree;
+    while (true)
     {
-        break;
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+        _steeringAngle = -correction;
+        _servo.setAngle(_steeringAngle);
+        _motors.forward(motorSpeedGarage);
+        if (abs(_pid.geterror()) <= 10)
+        {
+            break;
+        }
     }
-}
+
+    //// gog back and reset on the front black wall
+    _forwardTarget += angle_90;
+
+    while (true)
+    {
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+        _steeringAngle = -correction;
+        _servo.setAngle(_steeringAngle);
+        _motors.forward(motorSpeedGarage);
+        if (abs(_pid.geterror()) <= 10)
+        {
+            break;
+        }
     }
-    _motors
-    .stop();
-    while (true);
+    while (_ultra.getFrontCm() < 52)
+    {
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
+        _steeringAngle = correction;
+        _servo.setAngle(_steeringAngle);
+        _motors.backward(motorSpeedGarage);
+    }
+
+    /// go back and turn into garage
     
+    while (true)
+    {
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget + (angle_90*0.82), _imu.getHeadingRotating());
+        _steeringAngle = correction;
+        _servo.setAngle(angle_90);
+        _motors.backward(motorSpeedGarage);
+        if (abs(_pid.geterror()) <= 10 ||  _backSensor.getDistance()<85 )
+        {
+            break;
+        }
+    }
+        
+    _motors.stopBreak(1);
+
+     while (_ultra.getFrontCm()>5)
+    {
+        // Serial.println(_pid.geterror());
+        Serial.println(_ultra.getFrontCm());
+         
+        _imu.update();
+        float correction = _pid.compute(_forwardTarget+angle_90, _imu.getHeadingRotating());
+        _steeringAngle =-correction;
+        _servo.setAngle(_steeringAngle);
+        _motors.forward(motorSpeedGarage);
+        
+    }
+    _motors.stopBreak(-1);
+ 
+    _servo.center();
+    while (true){
+        Serial.println( _backSensor.getDistance());
+    }
+    while (true)
+    {
+        /* code */
+    }
+    
+        
 }
 
 void ObstacleAvoider::loop()
 {
-    
+
     _encoder.update();
     _imu.update();
     _comm.update();
@@ -205,9 +314,9 @@ void ObstacleAvoider::loop()
     case RESET:
         _resetCar();
         break;
-        case GARAGE:
-            _garageDoIn();
-            break;
+    case GARAGE:
+        _garageDoIn();
+        break;
     }
 
     _get_away_walls();
@@ -239,13 +348,13 @@ void ObstacleAvoider::_resetCar()
 {
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = correction;
-    if(!backward)
-        {
-            _motors.move(-255);
-            _timer.wait(600);
-            backward=true;
-            Serial.println("_______________________________________");
-        }
+    if (!backward)
+    {
+        _motors.move(-255);
+        _timer.wait(600);
+        backward = true;
+        Serial.println("_______________________________________");
+    }
     _motors.move(BACKWARD_SPEED);
     // Serial.println(_backSensor.readDistance());
     int distanceTOF = _backSensor.getDistance();
@@ -303,21 +412,22 @@ void ObstacleAvoider::_turn()
     // Serial.println(_pid.geterror());
     if (_ultra.getFrontCm() <= 25 and _pid.geterror() < abs(20))
     {
-        if(turn_right)
+        if (turn_right)
         {
-            _forwardTarget +=90;
+            _forwardTarget += 90;
         }
-        else 
+        else
         {
-            _forwardTarget -=90;
+            _forwardTarget -= 90;
         }
         _comm.resetTurn();
-        if(count_turn >= 11)
+        if (count_turn >= 11)
         {
-            _currentState =GARAGE;
+            _currentState = GARAGE;
         }
-        else{
-        _currentState = RESET;
+        else
+        {
+            _currentState = RESET;
         }
     }
 }

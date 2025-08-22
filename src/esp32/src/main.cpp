@@ -38,7 +38,7 @@ void setup() {
     
 
     
-    Serial.println("finish parking");
+    Serial.println("setup finish");
 
     #endif
   }
