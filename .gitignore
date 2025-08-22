@@ -1,2 +1,5 @@
-src/.pio
-src/.vscode
+src/esp32/.pio
+src/esp32/.vscode
+src/camera-vision/saved_images/*
+src/pip-venv
+__pycache__

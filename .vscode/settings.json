@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "system_error": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "compare": "cpp",
+        "atomic": "cpp",
+        "istream": "cpp",
+        "functional": "cpp",
+        "motorpid,h": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}

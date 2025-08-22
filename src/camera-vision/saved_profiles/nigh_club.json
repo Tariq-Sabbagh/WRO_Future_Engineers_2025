@@ -1,0 +1,57 @@
+{
+    "color_space": "LAB",
+    "profiles": {
+        "red": {
+            "lower": [
+                0,
+                163,
+                144
+            ],
+            "upper": [
+                255,
+                216,
+                255
+            ],
+            "offset_adjust": 20
+        },
+        "green": {
+            "lower": [
+                0,
+                0,
+                121
+            ],
+            "upper": [
+                252,
+                104,
+                255
+            ],
+            "offset_adjust": -20
+        },
+        "orange": {
+            "lower": [
+                0,
+                109,
+                82
+            ],
+            "upper": [
+                255,
+                171,
+                121
+            ],
+            "offset_adjust": 90
+        },
+        "blue": {
+            "lower": [
+                194,
+                114,
+                155
+            ],
+            "upper": [
+                255,
+                180,
+                255
+            ],
+            "offset_adjust": -90
+        }
+    }
+}
