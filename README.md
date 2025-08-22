@@ -1,9 +1,9 @@
-<center><h1> Bloody hilux WRO 2025 </center>
+<center><h1> Bloody Hilux WRO 2025 </center>
 
 
-
-![Banner](https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/other/readme-images/image.png)
-
+<p align="center">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/other/readme-images/image.png" alt="Banner">
+</p>
 
 
 [![Facebook](https://img.shields.io/badge/Facebook-%231877F2.svg?style=for-the-badge&logo=Facebook&logoColor=white)](https://www.facebook.com/profile.php?id=61553861744768)
@@ -16,9 +16,6 @@
 
 
 
-
-
-## Table of Contents
 
 ## Table of Contents
 
