@@ -1,4 +1,4 @@
-<center><h1> Bloody Hilux WRO 2025 </center>
+<center><h1>ITE  - Bloody Hilux WRO 2025 </center>
 
 
 <p align="center">
@@ -34,7 +34,7 @@
   * [PCB Design](#pcb)
   * [Main Processor](#main-processor)
   * [Microcontroller](#microcontroller)
-  * [Li-Po Battery](#li-po-battery)
+  * [Li-Po Battery](#li-ion-battery)
   * [Power Regulation](#power-regulation)
   * [Sensors](#sensors)
 * [Code and Algorithms](#code-and-algorithms)
@@ -199,6 +199,11 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 ## Our video of the robot on [Youtube](https://youtu.be/ZicO00x3EqA?feature=shared) <a class="anchor" id="video"></a>
 
+<a href="https://youtu.be/ZicO00x3EqA?feature=shared" target="_blank">
+ <p align="center">
+  <img src="https://img.youtube.com/vi/ZicO00x3EqA/maxresdefault.jpg" alt="WRO 2025 Robot Performance Video" width="600">
+ </p>
+</a>
 <a href="https://youtu.be/ZicO00x3EqA?feature=shared" target="_blank">
  <p align="center">
   <img src="https://img.youtube.com/vi/ZicO00x3EqA/maxresdefault.jpg" alt="WRO 2025 Robot Performance Video" width="600">
