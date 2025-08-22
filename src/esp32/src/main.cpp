@@ -51,7 +51,6 @@ void setup() {
     // In test mode, all logic is in setup(), so the loop does nothing.
     #else
     // In normal mode, we run the car's main logic loop.
-    // myCar.loop();
-    robot.loop();
+    myCar.loop();
   #endif
 }

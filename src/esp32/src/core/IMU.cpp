@@ -8,41 +8,11 @@ bool IMU::setup() {
         return false;
     }
     _bno.setExtCrystalUse(true);
-    reset();
     return true;
 }
 
 void IMU::update() {
-    sensors_event_t event;
-    _bno.getEvent(&event);
-
-    // Raw heading in [0, 360)
-    float rawHeading = event.orientation.x;
-
-    // Handle wrap-around to maintain rotation count
-    float delta = rawHeading - _prevRawHeading;
-
-    // Correct for wraparound
-    if (delta > 180.0f) {
-        _rotationCount--;
-    } else if (delta < -180.0f) {
-        _rotationCount++;
-    }
-
-    _prevRawHeading = rawHeading;
-
-    // Convert to [-180, 180)
-    float normalizedHeading = rawHeading;
-    if (normalizedHeading > 180.0f) {
-        normalizedHeading -= 360.0f;
-    }
-
-    // Apply offset
-    _heading = normalizedHeading - _offset;
-
-    // Normalize result again to -180..180
-    if (_heading > 180.0f) _heading -= 360.0f;
-    if (_heading < -180.0f) _heading += 360.0f;
+    _bno.getEvent(&_event);
 }
 
 float IMU::getHeading() {
