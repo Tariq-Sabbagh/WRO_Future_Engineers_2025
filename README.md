@@ -181,16 +181,16 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 
 
-| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/front_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/back_view.jpg" width="85%" /> | 
+<img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/front_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/back_view.jpg" width="85%" /> | 
 
 
 | *Front* | *Back* |
 
-| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/left_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/right_view.jpg" width="85%" /> | 
+<img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/left_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/right_view.jpg" width="85%" /> | 
 
 | *Left* | *Right* |
 
-| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/top_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/bottom_view.jpg" width="85%" /> | 
+<img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/top_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/bottom_view.jpg" width="85%" /> | 
 
 | *Top* | *Bottom* |
 
@@ -202,13 +202,13 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 ## Our video of the robot on [Youtube](https://youtu.be/ZicO00x3EqA?feature=shared) <a class="anchor" id="video"></a>
 
-
+<video src="https://youtu.be/ZicO00x3EqA?feature=shared" width="320" height="240" controls></video>
 
 <br>
 
 
 
-# Mobility Management <a class="anchor" id="mobility-management"></a>
+# [Mobility Management](https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/models/README.md) <a class="anchor" id="mobility-management"></a>
 Our robot's mechanical design is engineered for a precise balance of speed, stability, and cornering efficiency. The core components—powertrain, steering, and chassis—work together to achieve reliable and consistent performance on the track.
 
 
@@ -302,7 +302,7 @@ Our robot's mechanical design is engineered for a precise balance of speed, stab
 
 
 
-# Power and Sense Management <a class="anchor" id="power-and-sense-management"></a>
+# # [Power and Sense Management](https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/e-schemes/README.md) <a class="anchor" id="power-and-sense-management"></a>
 Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handling high-level vision processing and an ESP32 managing real-time hardware control. This distributed architecture ensures that complex calculations do not interfere with the precise, low-latency actions required for navigation.
 
 
@@ -472,7 +472,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 **Description:** The AS5600 magnetic encoder is attached to the motor shaft to provide high-precision feedback on wheel rotation. This allows us to accurately track the distance traveled, which is essential for executing precise avoidance maneuvers and for odometry calculations.
 
 
-# Code and Algorithms <a class="anchor" id="code-and-algorithms"></a>
+# [ Code and Algorithms ](https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/src/README.md)<a class="anchor" id="code-and-algorithms"></a>
 
 Our robot's intelligence is built on a distributed software architecture. A Python script on the `Raspberry Pi 5` handles all the complex computer vision tasks, acting as the "eyes" of the robot. It communicates high-level commands to a C++ firmware running on the `ESP32`, which serves as the "nervous system," executing physical movements with real-time precision.
 
