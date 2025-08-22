@@ -199,7 +199,7 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 ## Our video of the robot on [Youtube](https://youtu.be/ZicO00x3EqA?feature=shared) <a class="anchor" id="video"></a>
 
-<video src="https://youtu.be/ZicO00x3EqA?feature=shared" width="320" height="240" controls></video>
+<iframe width="560" height="315" src="https://youtu.be/ZicO00x3EqA?feature=shared" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <br>
 
