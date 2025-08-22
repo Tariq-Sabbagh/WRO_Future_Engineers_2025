@@ -54,7 +54,7 @@
 
 <p align="center">
 
-  <img src="./team-photos/[member-1-photo].jpg" alt="[Team Member 1 Tariq Al-Sabbagh Al-Taji]" width="80%">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/t-photos/Tariq.jpg" alt="[Team Member 1 Tariq Al-Sabbagh Al-Taji]" width="80%">
 
 </p>
 
@@ -81,7 +81,7 @@
 
 <p align="center">
 
-  <img src="./team-photos/member-2-photo.jpg" alt="[Team Member 2 Tayseer Matar]" width="80%">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/t-photos/Tayseer.jpg" alt="[Team Member 2 Tayseer Matar]" width="80%">
 
 </p>
 
@@ -108,7 +108,7 @@
 
 <p align="center">
 
-  <img src="./team-photos/[member-3-photo].jpg" alt="[Team Member 3 Abdulrahman Qassouma]" width="80%">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/t-photos/abdulrahman.jpg" alt="[Team Member 3 Abdulrahman Qassouma]" width="80%">
 
 </p>
 
@@ -130,11 +130,11 @@
 
 
 
-### [Mohammed Moaaz Sweid]
+### [Mohammed Mouaaz Sweid]
 
 <p align="center">
 
-  <img src="./team-photos/[coach-photo].jpg" alt="[Mohammed Moaz Sweid]" width="80%">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/t-photos/Mouaaz.jpg" alt="[Mohammed Moaz Sweid]" width="80%">
 
 </p>
 
@@ -156,7 +156,7 @@
 
 <p align="center">
 
-  <img src="./team-photos/[team-photo].jpg" alt="Team" width="80%">
+  <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/t-photos/Team.jpg" alt="Team" width="80%">
 
 </p>
 
@@ -199,7 +199,11 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 ## Our video of the robot on [Youtube](https://youtu.be/ZicO00x3EqA?feature=shared) <a class="anchor" id="video"></a>
 
-<video src="https://youtu.be/ZicO00x3EqA?feature=shared" width="320" height="240" controls></video>
+<a href="https://youtu.be/ZicO00x3EqA?feature=shared" target="_blank">
+ <p align="center">
+  <img src="https://img.youtube.com/vi/ZicO00x3EqA/maxresdefault.jpg" alt="WRO 2025 Robot Performance Video" width="600">
+ </p>
+</a>
 
 <br>
 
@@ -217,7 +221,7 @@ Our robot's mechanical design is engineered for a precise balance of speed, stab
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[drive-motor-photo].jpg" alt="DC Motor" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/Motor.jpg" alt="DC Motor" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -238,7 +242,7 @@ Our robot's mechanical design is engineered for a precise balance of speed, stab
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[motor-driver-photo].png" alt="L298N Motor Driver" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/L298N.jpg" alt="L298N Motor Driver" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -268,7 +272,7 @@ Our robot's mechanical design is engineered for a precise balance of speed, stab
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[servo-motor-photo].jpg" alt="[Servo Name]" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/MG90S.jpg" alt="[Servo Name]" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -291,7 +295,7 @@ Our robot's mechanical design is engineered for a precise balance of speed, stab
 
 
 
-![Chassis](./other/readme-images/[chassis-design-image].png "Chassis")
+![Chassis](https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/v-photos/bottom_view.jpg "Chassis")
 
 
 
@@ -305,13 +309,15 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 
 ### PCB Design <a class="anchor" id="pcb"></a>
 
+<img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/e-schemes/pcb_desgin.jpg" alt="PCB Design" width="100%">
+
 **Description:** To ensure reliable connections and an organized layout, we integrated all our core electronic components onto a central PCB. This board serves as the main hub for power distribution, taking the 12V input from the battery pack and routing it through the power switch and LM2596 voltage regulator to supply all other components. Using a PCB instead of loose wires significantly improves the robot's durability by preventing accidental disconnections and makes troubleshooting much easier.
 
 ### Main Processor <a class="anchor" id="main-processor"></a>
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[rpi5-photo].jpg" alt="Raspberry Pi 5" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/Raspberry.jpg" alt="Raspberry Pi 5" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -328,7 +334,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[microcontroller-photo].jpg" alt="ESP32 DevKit" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/esp32.jpg" alt="ESP32 DevKit" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -343,12 +349,12 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 
 
 
-### Li-Po Battery <a class="anchor" id="li-po-battery"></a>
+### Li-ion Battery <a class="anchor" id="li-ion-battery"></a>
 
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[battery-photo].jpg" alt="12V Battery Pack" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/Li-ion.jpg" alt="12V Battery Pack" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -365,7 +371,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[lm2596-photo].jpg" alt="LM2596 Step-Down Regulator" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/LM2596.jpg" alt="LM2596 Step-Down Regulator" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -384,7 +390,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[camera-photo].jpg" alt="Raspberry Pi Camera V3" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/camera.jpg" alt="Raspberry Pi Camera V3" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -403,7 +409,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[imu-photo].jpg" alt="BNO055 IMU" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/Bno055.jpg" alt="BNO055 IMU" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -421,7 +427,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[ultrasonic-photo].jpg" alt="Ultrasonic Sensor" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/Ultrasonic.jpg" alt="Ultrasonic Sensor" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -438,7 +444,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[tof-photo].jpg" alt="VL53L0X ToF Sensor" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/VL53L0X.jpg" alt="VL53L0X ToF Sensor" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
@@ -455,7 +461,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 <table>
   <tr>
     <td width="50%" style="text-align: left;">
-      <img src="./other/readme-images/[encoder-photo].jpg" alt="AS5600 Magnetic Encoder" width="100%">
+      <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/tree/main/other/Electrical-images/AS5600.jpg" alt="AS5600 Magnetic Encoder" width="100%">
     </td>
     <td width="50%" style="text-align: left; vertical-align: top;">
       <h3>Specifications:</h3>
