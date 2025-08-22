@@ -34,7 +34,7 @@
   * [PCB Design](#pcb)
   * [Main Processor](#main-processor)
   * [Microcontroller](#microcontroller)
-  * [Li-Po Battery](#li-po-battery)
+  * [Li-Po Battery](#li-ion-battery)
   * [Power Regulation](#power-regulation)
   * [Sensors](#sensors)
 * [Code and Algorithms](#code-and-algorithms)
@@ -347,7 +347,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 
 
 
-### Li-Po Battery <a class="anchor" id="li-po-battery"></a>
+### 18650 Li-ion <a class="anchor" id="li-ion-battery"></a>
 
 <table>
   <tr>
