@@ -40,7 +40,7 @@
 * [Code and Algorithms](#code-and-algorithms)
   * [Vision Processing and Obstacle Detection (Python)](#obstacle-management)
   * [Real-Time Control and State Machine (C++)](#real-time-control)
-* [License](#license)
+* [License](#copyright)
 
 
 ---
@@ -377,7 +377,7 @@ Our robot's electronic system is a two-part brain, with a Raspberry Pi 5 handlin
 
 **Description:** An LM2596 step-down voltage regulator is used to convert the 12V from the main battery pack into a stable 5V or 3.3V supply for the microcontrollers and sensors. This is crucial for protecting the sensitive electronics from the high voltage of the battery.
 
-### Sensors  <a class="anchor" id="microcontroller"></a>
+### Sensors  <a class="anchor" id="sensors"></a>
 
 #### Camera
 <table>
