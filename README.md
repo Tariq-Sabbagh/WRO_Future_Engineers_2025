@@ -181,17 +181,16 @@ The **[WRO 2025 Future Engineers - Self-Driving Cars](https://wro-association.or
 
 
 
-| <img src="./robot-photos/front.png" width="90%" /> | <img src="./robot-photos/back.png" width="85%" /> | 
+| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/front_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/back_view.jpg" width="85%" /> | 
 
-| :--: | :--: | 
 
 | *Front* | *Back* |
 
-| <img src="./robot-photos/left.png" width="90%" /> | <img src="./robot-photos/right.png" width="85%" /> | 
+| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/left_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/right_view.jpg" width="85%" /> | 
 
 | *Left* | *Right* |
 
-| <img src="./robot-photos/top.png" width="90%" /> | <img src="./robot-photos/bottom.png" width="85%" /> | 
+| <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/top_view.jpg" width="90%" /> | <img src="https://github.com/Tariq-Sabbagh/WRO_Future_Engineers_2025/blob/main/v-photos/bottom_view.jpg" width="85%" /> | 
 
 | *Top* | *Bottom* |
 
