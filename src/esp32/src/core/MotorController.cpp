@@ -17,14 +17,14 @@ void MotorController::setup() {
 }
 
 void MotorController::forward(int speed) {
-    digitalWrite(_dir1_pin, LOW);
-    digitalWrite(_dir2_pin, HIGH);
+    digitalWrite(_dir1_pin, HIGH);
+    digitalWrite(_dir2_pin, LOW);
     analogWrite(_speed_pin, speed);
 }
 
 void MotorController::backward(int speed) {
-    digitalWrite(_dir1_pin, HIGH);
-    digitalWrite(_dir2_pin, LOW);
+    digitalWrite(_dir1_pin, LOW);
+    digitalWrite(_dir2_pin, HIGH);
     analogWrite(_speed_pin, speed);
 }
 

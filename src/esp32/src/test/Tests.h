@@ -112,17 +112,20 @@ void test_motors()
   button.waitForPress("Motor Test");
   testMotors.setup();
 
+  
+  while(500000 - millis() >= 0){
   Serial.println("Moving FORWARD...");
   testMotors.forward(FORWARD_SPEED);
-  wait(2000, "Forward Motion");
+  wait(5000, "Forward Motion");
 
-  Serial.println("STOPPING...");
-  testMotors.stop();
-  wait(1000, "Brake");
+  // Serial.println("STOPPING...");
+  // testMotors.stop();
+  // wait(1000, "Brake");
 
   Serial.println("Moving BACKWARD...");
   testMotors.backward(FORWARD_SPEED);
-  wait(2000, "Backward Motion");
+  wait(5000, "Backward Motion");
+}
 
   testMotors.stop();
   Serial.println("Motor test complete.");
@@ -352,13 +355,13 @@ void runHardwareTests()
 
   Serial.println("\n===== STARTING HARDWARE DIAGNOSTIC SUITE =====");
 
-  // test_motors();
+  test_motors();
   // test_steering();
   // test_forward();
   // test_distance_sensors();
   // test_wire();
   // test_imu();
-  test_encoder();
+  // test_encoder();
   // test_TOF();
   // test_turn();
   // test_forward_with_static_speed();
