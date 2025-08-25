@@ -30,7 +30,7 @@ const int BUTTON_PIN = 15;
 const int MOTOR_PWM_CHANNEL = 1;
 const int MOTOR_PWM_FREQ = 30000;
 const int MOTOR_PWM_RESOLUTION = 8;
-const int FORWARD_SPEED = 210; // Speed value from 0-255
+const int FORWARD_SPEED = 180; // Speed value from 0-255
 const int BACKWARD_SPEED = -210;
 
 // -- Steering Control --

@@ -71,6 +71,10 @@ private:
     void _garageDoOut();
     void _garageDoIn();
     void _goForwardPID(float targetDistanceCm);
+    void _goUntilDistanceUltra(int distance,int motorSpeed); 
+    void _goForwardAngle(int motorSpeed,int error);
+    void _goBackwardAngle(int motorSpeed,int error);
+    void _goUntilDistanceToF(int distance, int motorSpeed);
     
 };
 
