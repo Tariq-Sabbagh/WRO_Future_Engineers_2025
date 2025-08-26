@@ -14,7 +14,7 @@ CALIBRATION_SCRIPT="calibration.py"
 UPLOAD_PORT=$(ls /dev/ttyUSB* 2>/dev/null | head -n 1)
 
 # Check if the USB port is found
-if [ -z "$UPLOAD_PORT" ]; then
+if [ -z "$UPLOAD_PORT" ] && [[ "$1" != "disable" && "$1" != "enable" && "$1" != "stop" ]]; then
     echo "ERROR: No /dev/ttyUSB device found."
     exit 1
 fi
@@ -76,8 +76,20 @@ case "$1" in
     obstacle)
         upload_mode "OBSTACLE" "esp32dev-obstacle"
         ;;
+    disable)
+        sudo systemctl disable camera-script.service
+        echo "Camera script service disabled"
+        ;;
+    enable)
+        sudo systemctl enable camera-script.service
+        echo "Camera script service enabled"
+        ;;
+    stop)
+        sudo systemctl stop camera-script.service
+        echo "Camera script service stopped"
+        ;;
     *)
-        echo "Usage: $0 {camera|upload|monitor|calibrate|test|obstacle} [args...]"
+        echo "Usage: $0 {camera|open|monitor|calibrate|test|obstacle|disable|enable|stop} [args...]"
         exit 1
         ;;
 esac
