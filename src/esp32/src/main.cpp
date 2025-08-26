@@ -11,7 +11,7 @@
 
 // Create our main car object
 // Car myCar;
-OpenChallenge openchallenge;
+OpenChallenge openChallenge;
 
 
 
@@ -31,7 +31,7 @@ void setup() {
   #else
     Serial.println("--- Running in Normal Operation Mode ---");
     // myCar.setup();
-    openchallenge.setup();
+    openChallenge.setup();
     // garage.begin();
     // robot.attachHardware(&motors, &servo, &button, &encoder, &imu, &backSensor , &ultra);
     // outParking.attachHardware(&motors, &servo, &encoder, &imu, &ultra);
@@ -56,6 +56,6 @@ void setup() {
     // In normal mode, we run the car's main logic loop.
     // myCar.loop();
     // robot.loop();
-    openchallenge.loop();
+    openChallenge.loop();
   #endif
 }
