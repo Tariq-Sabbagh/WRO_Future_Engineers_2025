@@ -159,12 +159,11 @@ void test_encoder()
   testMotors.stop();
 }
 
-void test_neopixel()
-{
-  button.waitForPress();
-  NeoPixel pixel(NEOPIXEL_PIN, 2); // Adjust pin and number of pixels as needed
-  pixel.setup();
-  pixel.testCycle();
+void test_neopixel() {
+    button.waitForPress("NeoPixel Test");
+    NeoPixel pixels(NEOPIXEL_PIN, 2);
+    pixels.setup();
+    pixels.testCycle();
 }
 
 void test_steering()
