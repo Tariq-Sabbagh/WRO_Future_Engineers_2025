@@ -1,61 +1,40 @@
-// #include "core/Car.h"
 #include <Wire.h> 
 
 #include "core/ObstacleAvoider.h"
 #include "core/OpenChallenge.h"
-// #include "core/Garage.h"
 
 #ifdef RUN_TESTS
   #include "test/Tests.h"
 #endif
 
-// Create our main car object
-// Car myCar;
+// Objects
 OpenChallenge openChallenge;
-
-
-
 ObstacleAvoider robot;
-// OutParking outParking;
 
-//==============================================================================
-// ARDUINO SETUP
-//==============================================================================
 void setup() {
   Serial.begin(115200);
   Serial.println("\n--- Modular Car Initializing ---");
- 
+
   #ifdef RUN_TESTS
     Serial.println("!!! RUNNING IN TEST MODE !!!");
-    runHardwareTests(); // This function will loop forever, running tests.
+    runHardwareTests(); // loops forever
+  #elif defined(OBSTACLE)
+    Serial.println("--- Running in ObstacleAvoider Mode ---");
+    robot.setup();
   #else
-    Serial.println("--- Running in Normal Operation Mode ---");
-    // myCar.setup();
+    Serial.println("--- Running in OpenChallenge Mode ---");
     openChallenge.setup();
-    // garage.begin();
-    // robot.attachHardware(&motors, &servo, &button, &encoder, &imu, &backSensor , &ultra);
-    // outParking.attachHardware(&motors, &servo, &encoder, &imu, &ultra);
+  #endif
 
-    
-    // robot.setup();
-    
+  Serial.println("Setup finished.");
+}
 
-    
-    Serial.println("setup finish");
-
-    #endif
-  }
-  
-  //==============================================================================
-  // ARDUINO LOOP
-  //==============================================================================
-  void loop() {
-    #ifdef RUN_TESTS
-    // In test mode, all logic is in setup(), so the loop does nothing.
-    #else
-    // In normal mode, we run the car's main logic loop.
-    // myCar.loop();
-    // robot.loop();
+void loop() {
+  #ifdef RUN_TESTS
+    // Nothing to do, tests already running in setup()
+  #elif defined(OBSTACLE)
+    robot.loop();
+  #else
     openChallenge.loop();
   #endif
 }

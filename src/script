@@ -24,11 +24,14 @@ function activate_virtualenv() {
     source "$VENV" || { echo "Failed to activate virtualenv"; exit 1; }
 }
 
-# Function to upload firmware
-function upload_firmware() {
+# Upload functions
+function upload_mode() {
+    local mode=$1
+    local pio_env=$2
     activate_virtualenv
     cd "$ESP32_DIR" || exit 1
-    platformio run -e esp32dev --target upload --upload-port "$UPLOAD_PORT" && \
+    echo "Uploading firmware in $mode MODE..."
+    platformio run -e "$pio_env" --target upload --upload-port "$UPLOAD_PORT" && \
     platformio device monitor --port "$UPLOAD_PORT" --baud 115200
 }
 
@@ -53,19 +56,10 @@ function run_calibration() {
     python "$CALIBRATION_SCRIPT"
 }
 
-# Function for test mode upload
-function upload_test_mode() {
-    activate_virtualenv
-    cd "$ESP32_DIR" || exit 1
-    echo "Uploading firmware in TEST MODE..."
-    platformio run -e esp32dev-test --target upload --upload-port "$UPLOAD_PORT" && \
-    platformio device monitor --port "$UPLOAD_PORT" --baud 115200
-}
-
-# Main case statement to handle command line arguments
+# Main case statement
 case "$1" in
-    upload)
-        upload_firmware
+    open)
+        upload_mode "OPEN" "esp32dev"
         ;;
     monitor)
         monitor_device
@@ -77,10 +71,13 @@ case "$1" in
         run_calibration
         ;;
     test)
-        upload_test_mode
+        upload_mode "TEST" "esp32dev-test"
+        ;;
+    obstacle)
+        upload_mode "OBSTACLE" "esp32dev-obstacle"
         ;;
     *)
-        echo "Usage: $0 {camera|upload|monitor|calibrate|test} [args...]"
+        echo "Usage: $0 {camera|upload|monitor|calibrate|test|obstacle} [args...]"
         exit 1
         ;;
 esac
