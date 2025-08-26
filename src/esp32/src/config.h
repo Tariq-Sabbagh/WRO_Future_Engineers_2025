@@ -50,4 +50,6 @@ const int _all_turn = 45;
 
 const int SHT_LOX = 16;
 
+const int NEOPIXEL_PIN = 17;
+
 #endif // CONFIG_H
