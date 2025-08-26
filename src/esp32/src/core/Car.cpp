@@ -1,11 +1,12 @@
 #include "Car.h"
 
 Car::Car() :
-    _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
+    _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN,&_encoder),
     _steering(SERVO_PIN),
     _distSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
     _imu(),
     _button(BUTTON_PIN),
+    _encoder(),
     _pid()  // Initialize PID controller
 {
     // Initialize state variables

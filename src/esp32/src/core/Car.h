@@ -13,6 +13,7 @@ private:
     IMU _imu;
     Button _button;
     PIDController _pid;  // PID controller for steering
+     Encoder _encoder;
     
     // Navigation state
     float _offsetGyro;

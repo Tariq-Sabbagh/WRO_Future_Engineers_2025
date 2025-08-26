@@ -22,6 +22,8 @@ float DistanceSensors::getRightCm() {
     return kalman(med, _kalman_right, _error_right);
 }
 
+
+
 float DistanceSensors::median(NewPing& sensor, int samples) {
     float values[samples];
     for (int i = 0; i < samples; i++) {

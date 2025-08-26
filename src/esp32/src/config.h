@@ -31,7 +31,7 @@ const int MOTOR_PWM_CHANNEL = 1;
 const int MOTOR_PWM_FREQ = 30000;
 const int MOTOR_PWM_RESOLUTION = 8;
 const int FORWARD_SPEED = 200; // Speed value from 0-255
-const int BACKWARD_SPEED = -200;
+const int BACKWARD_SPEED = -185;
 
 // -- Steering Control --
 const int SERVO_CENTER_ANGLE = 90; // The exact angle that makes your servo point straight.
@@ -43,10 +43,9 @@ const float STEERING_KP = 3.5;     // Proportional gain for steering correction.
 const int ULTRASONIC_MAX_DISTANCE_CM = 200; // Max distance for ultrasonic sensors.
 
 // -- Navigation Logic --
-const float TURN_TRIGGER_DISTANCE_CM = 50.0; // How close to a wall before deciding to turn.
+const float TURN_TRIGGER_DISTANCE_CM = 55.0; // How close to a wall before deciding to turn.
 const float TURN_CLEARANCE_DISTANCE_CM = 100.0; // How much space must be clear to the side to make a turn.
-const unsigned long TURN_COOLDOWN_MS = 1500;  // Minimum time between turns.
-
+const unsigned long TURN_COOLDOWN_MS = 1000;  // Minimum time between turns.
 const int _all_turn = 45;
 
 const int SHT_LOX = 16;

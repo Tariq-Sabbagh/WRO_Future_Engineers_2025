@@ -39,8 +39,8 @@ class ObstacleDetector:
         self.MAX_AREA = 3000.0
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
-        self.turn_detection_cooldown = Cooldown(6)
-        self.wide_roi_cooldown = Cooldown(3.5)
+        self.turn_detection_cooldown = Cooldown(7)
+        self.wide_roi_cooldown = Cooldown(4.5)
         self.movedPoint = 5
         self.first_turn_detected = False
         self.persistent_turn_direction = None
@@ -214,7 +214,7 @@ class ObstacleDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         # Only send commands in production mode
-        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 70:
+        if (self.mode is not OperationMode.CAMERA_ONLY) and travel_dist <= 80:
             self.send_command('AVOID', travel_dist, turn_angle)
 
         print(
