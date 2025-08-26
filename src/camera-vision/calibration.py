@@ -31,10 +31,10 @@ SAVED_IMAGES_DIR.mkdir(exist_ok=True, parents=True)
 # -----------------------
 # Default profiles (LAB) to get you started
 color_profiles = {
-    "red":    {"lower": [0, 0, 0],      "upper": [255, 175, 69],  "offset_adjust": 20},
-    "green":  {"lower": [0, 0, 135],    "upper": [255, 113, 255], "offset_adjust": -20},
-    "orange": {"lower": [0, 120, 81],   "upper": [255, 149, 100], "offset_adjust": 90},
-    "blue":   {"lower": [0, 128, 138],  "upper": [119, 160, 252], "offset_adjust": -90},
+    "red":    {"lower": [0, 0, 0],      "upper": [255, 255, 255],  "offset_adjust": 20},
+    "green":  {"lower": [0, 0, 0],    "upper": [255, 255, 255], "offset_adjust": -20},
+    "orange": {"lower": [0, 0, 0],   "upper": [255, 255, 255], "offset_adjust": 90},
+    "blue":   {"lower": [0, 0, 0],  "upper": [255, 255, 255], "offset_adjust": -90},
 }
 
 selected_color = "red"

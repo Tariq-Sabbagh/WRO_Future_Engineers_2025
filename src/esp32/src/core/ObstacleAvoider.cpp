@@ -41,11 +41,12 @@ void ObstacleAvoider::setup()
         while (1)
             ;
     }
+    _button.waitForPressOrRestart();
     
     _pid.setup(3.5, 0, 0);
-    _pid.setOutputLimits(-90, 90);
+    _pid.setOutputLimits(-75, 75);
 
-    // _garageDoOut();
+    _garageDoOut();
     // _garageDoIn();
 
     _comm.clearSerialBuffer();
@@ -54,29 +55,29 @@ void ObstacleAvoider::setup()
 void ObstacleAvoider::_garageDoOut()
 {
 
-    if (_ultra.getLeftCm() < _ultra.getRightCm())
+    // if (_ultra.getLeftCm() < _ultra.getRightCm())
 
-    {
-        _pid_target_parking = -_pid_target_parking * 0.9;
-        turn_right = true;
-    }
+    // {
+    //     _pid_target_parking = -_pid_target_parking * 0.9;
+    //     turn_right = true;
+    // }
 
-    while (abs(_imu.getHeading()) <= 85)
-    {
+    // while (abs(_imu.getHeading()) <= 85)
+    // {
 
-        _imu.update();
-        float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
-        _servo.setAngle(-correction);
-        _motors.move(190);
-    }
-    while (_ultra.getFrontCm() >= 35)
-    {
-        _imu.update();
-        float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
-        _servo.setAngle(-correction);
-    }
+    //     _imu.update();
+    //     float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
+    //     _servo.setAngle(-correction);
+    //     _motors.move(190);
+    // }
+    // while (_ultra.getFrontCm() >= 35)
+    // {
+    //     _imu.update();
+    //     float correction = _pid.compute(_pid_target_parking, _imu.getHeading());
+    //     _servo.setAngle(-correction);
+    // }
     _encoder.reset();
-    while (abs(_imu.getHeading()) >= 0 and _encoder.getDistanceCm() < 50)
+    while (abs(_encoder.getDistanceCm()) < 20)
     {
         _motors.backward(FORWARD_SPEED);
         _encoder.update();
@@ -168,7 +169,6 @@ void ObstacleAvoider::loop()
     _encoder.update();
     _imu.update();
     _comm.update();
-    _backSensor.update();
 
     switch (_currentState)
     {
@@ -196,6 +196,9 @@ void ObstacleAvoider::loop()
 
     if (_comm.getTurn() != 0.f and _currentState != GARAGE)
     {
+        if(count_turn == 0){
+        if(_comm.getTurn() == 90) turn_right =true;
+        else turn_right = false;}
         _currentState = TURN;
     }
 
@@ -207,7 +210,7 @@ void ObstacleAvoider::_get_away_walls()
 {
     float right = _ultra.getRightCm();
     float left = _ultra.getLeftCm();
-    const float k = 1.2;
+    const float k = 1.5;
     if (right <= 30 and right != 0)
     {
         _steeringAngle += k * (30 - right);
@@ -239,10 +242,10 @@ void ObstacleAvoider::_resetCar()
     int distanceTOF = _backSensor.getDistance();
     // Serial.print("error:");
     // Serial.println(_pid.geterror());
-    if (distanceTOF <= 250 and abs(_pid.geterror()) < 15)
+    if (distanceTOF <= 250 )
     {
         // Serial.println(distanceTOF);
-        Serial.println(_pid.geterror());
+        // Serial.println(_pid.geterror());
         count_turn++;
         _motors.move(FORWARD_SPEED);
         _comm.resetManeuverValues();
@@ -288,7 +291,7 @@ void ObstacleAvoider::_turn()
     float correction = _pid.compute(_forwardTarget, _imu.getHeadingRotating());
     _steeringAngle = -correction;
     // _motors.move(FORWARD_SPEED - 45);
-    if (count_turn >= 0)
+    if (count_turn >= 12)
     {
         _currentState = GARAGE;
     }

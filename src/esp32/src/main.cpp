@@ -15,7 +15,7 @@ OpenChallenge openchallenge;
 
 
 
-// ObstacleAvoider robot;
+ObstacleAvoider robot;
 // OutParking outParking;
 
 //==============================================================================

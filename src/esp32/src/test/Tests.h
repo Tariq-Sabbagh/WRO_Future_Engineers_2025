@@ -145,9 +145,9 @@ void test_encoder()
   }
 
   unsigned long startTime = millis();
-  while (abs(encoder.getDistanceCm()) < 100)
+  while (abs(encoder.getDistanceCm()) < 20)
   {
-    testMotors.forward(FORWARD_SPEED);
+    testMotors.move(-FORWARD_SPEED);
     encoder.update();
     Serial.print("Distance (cm): ");
     Serial.println(encoder.getDistanceCm());
@@ -358,11 +358,11 @@ void runHardwareTests()
   // test_motors();
   // test_steering();
   // test_forward();
-  test_distance_sensors();
+  // test_distance_sensors();
   // test_wire();
   // test_imu();
   // test_encoder();
-  // test_TOF();
+  test_TOF();
   // test_turn();
   // test_forward_with_static_speed();
 

@@ -55,13 +55,18 @@ private:
 
     float _headingTarget  = 0.0f;   
     unsigned long _lastTurnMs = 0;
+
     int   _turnCount = 0;
+
+    int _rightWall = 30;
+    int _leftWall = 30;
 
     
     float _turnTargetDeltaDeg = 0.0f;   
     float _backwardTargetCm   = 0.0f;   
     long  _encoderStartTicks  = 0;
     bool turn_right = false;
+    float _pid_target_parking = -100 ;
 
     
     void _enter(State s);
@@ -88,7 +93,8 @@ private:
  
     void _computeHeadingPID();   
     void _getAwayWalls();        
-    void _applySteering();       
+    void _applySteering();  
+    void _garageOut();     
 
     static float _clamp(float v, float lo, float hi);
     // void _handleSerialCommands();
