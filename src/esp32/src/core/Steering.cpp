@@ -7,7 +7,6 @@ Steering::Steering(int servo_pin) {
 }
 
 void Steering::setup() {
-    Serial.println("Setting up Streering....");
     ESP32PWM::allocateTimer(0); // Allocate a timer for the servo library
     _servo.setPeriodHertz(50);
     _servo.attach(_servo_pin, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
