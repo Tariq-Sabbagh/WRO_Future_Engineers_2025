@@ -22,6 +22,8 @@ float DistanceSensors::getRightCm() {
     return _sonar_right.ping_cm();
 }
 
+
+
 float DistanceSensors::median(NewPing& sensor, int samples) {
     float values[samples];
     for (int i = 0; i < samples; i++) {

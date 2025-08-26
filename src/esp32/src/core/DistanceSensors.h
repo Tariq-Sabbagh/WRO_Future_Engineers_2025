@@ -15,6 +15,7 @@ public:
     float getFrontCm();
     float getLeftCm();
     float getRightCm();
+    float readReliable(NewPing& sensor, int threshold);
 
 private:
     NewPing _sonar_front;

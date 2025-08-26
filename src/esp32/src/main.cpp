@@ -1,7 +1,8 @@
-#include "core/Car.h"
+// #include "core/Car.h"
 #include <Wire.h> 
 
 #include "core/ObstacleAvoider.h"
+#include "core/OpenChallenge.h"
 // #include "core/Garage.h"
 
 #ifdef RUN_TESTS
@@ -10,10 +11,11 @@
 
 // Create our main car object
 // Car myCar;
+OpenChallenge openchallenge;
 
 
 
-ObstacleAvoider robot;
+// ObstacleAvoider robot;
 // OutParking outParking;
 
 //==============================================================================
@@ -29,12 +31,13 @@ void setup() {
   #else
     Serial.println("--- Running in Normal Operation Mode ---");
     // myCar.setup();
+    openchallenge.setup();
     // garage.begin();
     // robot.attachHardware(&motors, &servo, &button, &encoder, &imu, &backSensor , &ultra);
     // outParking.attachHardware(&motors, &servo, &encoder, &imu, &ultra);
 
     
-    robot.setup();
+    // robot.setup();
     
 
     
@@ -52,6 +55,7 @@ void setup() {
     #else
     // In normal mode, we run the car's main logic loop.
     // myCar.loop();
-    robot.loop();
+    // robot.loop();
+    openchallenge.loop();
   #endif
 }

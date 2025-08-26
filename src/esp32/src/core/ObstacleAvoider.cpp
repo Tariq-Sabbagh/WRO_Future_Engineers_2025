@@ -41,8 +41,7 @@ void ObstacleAvoider::setup()
         while (1)
             ;
     }
-    _button.waitForPress();
-
+    
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-90, 90);
 

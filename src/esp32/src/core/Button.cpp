@@ -31,6 +31,25 @@ bool Button::isInactive()
     return digitalRead(_pin) == HIGH;
 }
 
+
+void Button::waitForPressOrRestart(unsigned long timeoutMs)
+{
+    Serial.println("----------------------------------------");
+    Serial.print("Press button to continue, restarting after ");
+    Serial.print(timeoutMs/1000);
+    Serial.print(" seconds : ");
+
+    while (this->isInactive())
+    {
+        if (millis()>= timeoutMs)
+        {
+            Serial.println("Timeout! Restarting ESP32...");
+            ESP.restart();  
+        }
+        delay(10); 
+    }
+}
+
 /**
  * @brief Pauses the program until the button is pressed.
  */
