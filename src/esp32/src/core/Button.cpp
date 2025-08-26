@@ -49,8 +49,14 @@ void Button::waitForPressOrRestart(unsigned long timeoutMs)
 /**
  * @brief Pauses the program until the button is pressed.
  */
-void Button::waitForPress() {
-    while(this->isInactive()) {
+void Button::waitForPress(const char *message)
+{
+    Serial.println("----------------------------------------");
+    Serial.print("Press button to continue: ");
+    Serial.println(message);
+
+    while (this->isInactive())
+    {
         delay(10); // Small delay to prevent busy-waiting
     }
 }

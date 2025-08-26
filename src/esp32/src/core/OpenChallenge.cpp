@@ -213,7 +213,7 @@ bool OpenChallenge::_shouldConsiderTurn()
     if ((millis() - _lastTurnMs) < TURN_COOLDOWN_MS)
         return false;
     float front = _ultra.getFrontCm();
-    Serial.print("Front sens:");
+    // Serial.print("Front sens:");
     Serial.println(front);
     return (front > 1 && front <= TURN_TRIGGER_DISTANCE_CM);
 }
