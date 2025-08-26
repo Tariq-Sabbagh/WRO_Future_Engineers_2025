@@ -57,6 +57,6 @@ void Button::waitForPress(const char *message)
 
     while (this->isInactive())
     {
-        delay(10); // Small delay to prevent busy-waiting
+        delay(10); // Small delay to prevent busy-waiting 
     }
 }
