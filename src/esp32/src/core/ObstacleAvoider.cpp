@@ -10,7 +10,8 @@ ObstacleAvoider::ObstacleAvoider() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOT
                                      _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
                                      _backSensor(SHT_LOX, 0x20),
                                      _comm(),
-                                     _motorPID(_motors, _encoder)
+                                     _motorPID(_motors, _encoder),
+                                     _pixels(NEOPIXEL_PIN, 2)
 {
 
     _motorPID.setup(2.0, 0.5, 0.1, -255, 255);
@@ -25,11 +26,14 @@ bool backward = false;
 bool forward = false;
 void ObstacleAvoider::setup()
 {
+    _pixels.setup();
+    _pixels.setRed();
     Wire.begin();
     _motors.setup();
     _servo.setup();
     _button.setup();
-    _encoder.begin();
+    _encoder.setup();
+    
     while (!_imu.setup())
     {
         Serial.println("FATAL: IMU failed to initialize.");
@@ -41,7 +45,7 @@ void ObstacleAvoider::setup()
         while (1)
             ;
     }
-    _button.waitForPressOrRestart();
+    _button.waitForPressOrRestart(_pixels);
     
     _pid.setup(3.5, 0, 0);
     _pid.setOutputLimits(-80, 80);

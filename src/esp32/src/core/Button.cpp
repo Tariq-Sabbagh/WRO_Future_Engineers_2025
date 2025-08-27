@@ -28,12 +28,14 @@ bool Button::isInactive() {
 }
 
 
-void Button::waitForPressOrRestart(unsigned long timeoutMs)
+void Button::waitForPressOrRestart(NeoPixel& pixels, unsigned long timeoutMs)
+
 {
     Serial.println("----------------------------------------");
     Serial.print("Press button to continue, restarting after ");
     Serial.print(timeoutMs/1000);
     Serial.print(" seconds : ");
+    pixels.setGreen();
 
     while (this->isInactive())
     {
@@ -44,6 +46,7 @@ void Button::waitForPressOrRestart(unsigned long timeoutMs)
         }
         delay(10); 
     }
+    pixels.clear();
 }
 
 /**

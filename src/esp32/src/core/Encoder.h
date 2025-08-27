@@ -9,7 +9,7 @@
 class Encoder {
 public:
     Encoder();
-    bool begin();
+    bool setup();
     void update();               // Call frequently to track motion
     void reset();                // Reset accumulated distance
     float getDistanceCm() const;

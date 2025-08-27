@@ -6,7 +6,7 @@
 Encoder::Encoder()
     : _lastAngle(0), _totalAngle(0), _distanceCm(0) {}
 
-bool Encoder::begin() {
+bool Encoder::setup() {
     Wire.begin();
     if (!_as5600.begin()) {
     Serial.println("Encoder not detected!");

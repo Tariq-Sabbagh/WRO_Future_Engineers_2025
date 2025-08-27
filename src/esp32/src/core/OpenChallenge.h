@@ -15,6 +15,7 @@
 #include "core/DistanceSensors.h"
 #include "core/TOFSensor.h"
 #include "MotorPID.h"
+#include "core/NeoPixel.h"
 
 class OpenChallenge {
 public:
@@ -35,7 +36,9 @@ private:
     Timer                _timer;
     DistanceSensors      _ultra;          
     TOFSensor            _backTOF;        
-    MotorSpeedPID        _motorPID;       
+    MotorSpeedPID        _motorPID;
+    NeoPixel _pixels;
+
 
     
     enum State {

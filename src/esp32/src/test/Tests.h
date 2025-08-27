@@ -138,7 +138,7 @@ void test_encoder()
   Wire.begin();
   testMotors.setup();
 
-  if (!encoder.begin())
+  if (!encoder.setup())
   {
     Serial.println("Encoder not detected!");
     while (1)
@@ -337,7 +337,7 @@ void test_forward_with_static_speed()
     Serial.println("IMU failed to initialize. Test aborted.");
     return;
   }
-  if (!encoder.begin())
+  if (!encoder.setup())
   {
     Serial.println("Encoder not detected!");
     while (1)

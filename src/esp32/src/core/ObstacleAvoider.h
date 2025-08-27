@@ -14,6 +14,7 @@
 #include "MotorPID.h"
 #include "core/DistanceSensors.h"
 #include "core/TOFSensor.h"
+#include "core/NeoPixel.h"
 #include <esp_system.h>
 
 
@@ -41,6 +42,7 @@ private:
     DistanceSensors _ultra;
     TOFSensor _backSensor;
     MotorSpeedPID _motorPID;
+    NeoPixel _pixels;
     float _steeringAngle;
     float _backwardTarget;
     int _pid_target_parking = -100;

@@ -2,6 +2,7 @@
 #define BUTTON_H
 
 #include <Arduino.h>
+#include "core/NeoPixel.h"
 
 class Button {
 public:
@@ -10,7 +11,7 @@ public:
     bool isActive();   // Returns true if the button is pressed (active)
     bool isInactive(); // Returns true if the button is not pressed (inactive)
     void waitForPress(const char *message = ""); // Blocks code execution until button is pressed
-    void waitForPressOrRestart(unsigned long timeoutMs = 8000);
+    void waitForPressOrRestart(NeoPixel& pixels, unsigned long timeoutMs = 8000);
 
 private:
     int _pin;

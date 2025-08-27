@@ -1,13 +1,28 @@
 #include "OpenChallenge.h"
 
 OpenChallenge::OpenChallenge()
-    : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN, &_encoder), _steering(SERVO_PIN), _imu(), _headingPID(), _encoder(), _comm(), _button(BUTTON_PIN), _timer(), _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT), _backTOF(SHT_LOX, 0x20), _motorPID(_motors, _encoder), _state(INIT)
+    : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN, &_encoder),
+      _steering(SERVO_PIN),
+      _imu(),
+      _headingPID(),
+      _encoder(),
+      _comm(),
+      _button(BUTTON_PIN),
+      _timer(),
+      _ultra(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
+      _backTOF(SHT_LOX, 0x20),
+      _motorPID(_motors, _encoder),
+      _state(INIT),
+      _pixels(NEOPIXEL_PIN, 2)
+
 {
 }
 
 void OpenChallenge::setup()
 {
     Serial.println("_______________________");
+    _pixels.setup();
+    _pixels.setRed();
     Wire.begin();
     Serial.begin(115200);
 
@@ -27,7 +42,7 @@ void OpenChallenge::setup()
     {
         Serial.println("FATAL: Back TOF failed to init.");
     }
-    _button.waitForPressOrRestart();
+    _button.waitForPressOrRestart(_pixels);
 
     _headingPID.setup(STEERING_KP, 0.0f, 0.0f);
     _headingPID.setOutputLimits(-90, 90);
@@ -106,7 +121,7 @@ void OpenChallenge::loop()
 
     _applySteering();
 
-    if (_turnCount >=12)
+    if (_turnCount >= 12)
     {
         _halt();
     }
