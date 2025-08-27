@@ -76,6 +76,7 @@ private:
     void _goForwardAngle(int motorSpeed,int error);
     void _goBackwardAngle(int motorSpeed,int error);
     void _goUntilDistanceToF(int distance, int motorSpeed);
+    void _backDistance();
     
 };
 
