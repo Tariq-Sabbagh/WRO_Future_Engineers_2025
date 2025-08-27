@@ -48,7 +48,7 @@ void ObstacleAvoider::setup()
     _button.waitForPressOrRestart(_pixels);
     
     _pid.setup(3.5, 0, 0);
-    _pid.setOutputLimits(-80, 80);
+    _pid.setOutputLimits(-90, 90);
 
     _garageDoOut();
     _backDistance();
@@ -99,9 +99,9 @@ void ObstacleAvoider::_garageDoIn()
 {
     ////// reset from tariq
 
-    int motorSpeedGarage = 190;
+    int motorSpeedGarage = 200;
     int wall_garage_distance = 17;
-    int black_wall_reset_garage_distance = 17;
+    int black_wall_reset_garage_distance = 18;
 
     int wall_garage_degree = 65;
     int angle_90 = 90;
@@ -110,8 +110,8 @@ void ObstacleAvoider::_garageDoIn()
         _goUntilDistanceUltra(black_wall_reset_garage_distance, motorSpeedGarage);
         Serial.println("reset in black");
         _forwardTarget += 90;
-       _goUntilDistanceToF(250,  -motorSpeedGarage);
-        Serial.println("go back");
+       _goUntilDistanceToF(300,  -motorSpeedGarage);
+        Serial.println("go backkkkk");
 
         _forwardTarget -= 90;
         _goUntilDistanceUltra(black_wall_reset_garage_distance, motorSpeedGarage);
@@ -125,7 +125,7 @@ void ObstacleAvoider::_garageDoIn()
     else
     {
         _goUntilDistanceUltra(black_wall_reset_garage_distance, motorSpeedGarage);
-        Serial.println("reset in black");
+        // Serial.println("reset in black");
 
         if (turn_right)
         {
@@ -136,7 +136,7 @@ void ObstacleAvoider::_garageDoIn()
             _forwardTarget -= 90;
         }
         _goUntilDistanceUltra(wall_garage_distance - 5, motorSpeedGarage);
-        Serial.println("wall_garage_distance");
+        // Serial.println("wall_garage_distance");
 
     }
 
@@ -159,10 +159,10 @@ void ObstacleAvoider::_garageDoIn()
     //// go back and reset on the front black wall
     _forwardTarget += angle_90;
     _goForwardAngle(motorSpeedGarage, 10);
-    _goUntilDistanceUltra(52, -motorSpeedGarage);
+    _goUntilDistanceUltra(50, -motorSpeedGarage);
     _forwardTarget += angle_90;
 
-    _goBackwardAngle(motorSpeedGarage, 30);
+    _goBackwardAngle(motorSpeedGarage, 35);
     _goUntilDistanceUltra(8, motorSpeedGarage);
 
     _stopAndHalt();
@@ -217,14 +217,14 @@ void ObstacleAvoider::_get_away_walls()
 {
     float right = _ultra.getRightCm();
     float left = _ultra.getLeftCm();
-    const float k = 2;
-    if (right <= 30 and right != 0)
+    const float k = 1.6;
+    if (right <= 40 and right != 0)
     {
-        _steeringAngle += k * (30 - right);
+        _steeringAngle += k * (40 - right);
     }
-    if (left <= 30 and left != 0)
+    if (left <= 40 and left != 0)
     {
-        _steeringAngle -= k * (30 - left);
+        _steeringAngle -= k * (40 - left);
     }
 }
 void ObstacleAvoider::_stopUntilTimer()
@@ -249,7 +249,7 @@ void ObstacleAvoider::_resetCar()
         // Serial.println(_pid.geterror());
         count_turn++;
         _comm.resetManeuverValues();
-        _timer.start(200);
+        _timer.start(250);
         _currentState = IDLE;
     }
 }
@@ -399,12 +399,12 @@ void ObstacleAvoider::_goUntilDistanceUltra(int distance, int motorSpeed)
 
         if (motorSpeed > 0)
         {
-            if (_ultra.getFrontCm() < distance)
+            if (_ultra.getFrontCm() < distance && abs(_pid.geterror())<15)
                 break;
         }
         else
         {
-            if (_ultra.getFrontCm() > distance)
+            if (_ultra.getFrontCm() > distance && abs(_pid.geterror())<15)
                 break;
         }
     }
@@ -429,12 +429,12 @@ void ObstacleAvoider::_goUntilDistanceToF(int distance, int motorSpeed)
 
         if (motorSpeed > 0)
         {
-            if (_backSensor.getDistance() >distance)
+            if (_backSensor.getDistance() >distance && abs(_pid.geterror())<15)
                 break;
         }
         else
         {
-            if (_backSensor.getDistance() < distance)
+            if (_backSensor.getDistance() < distance &&abs(_pid.geterror())<15)
                 break;
         }
     }
