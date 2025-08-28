@@ -249,7 +249,7 @@ void ObstacleAvoider::_resetCar()
         // Serial.println(_pid.geterror());
         count_turn++;
         _comm.resetManeuverValues();
-        _timer.start(250);
+        _timer.start(500);
         _currentState = IDLE;
     }
 }

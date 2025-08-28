@@ -33,13 +33,13 @@ class ObstacleDetector:
         self.mode = mode
         self.SERIAL_PORT = serial_port
         self.BAUDRATE = 115200
-        self.PROFILES_FILE = "color_profiles.json"
+        self.PROFILES_FILE = "Hlba_rqm1.json"
         self.KNOWN_OBSTACLE_HEIGHT_CM = 10.0
         self.FOCAL_LENGTH = 570.0
         self.MAX_AREA = 3000.0
         self.last_turn_time = 0  # timestamp of the last detected turn
         self.detect_turn_cooldown = 6   # seconds to wait before detecting a new turn
-        self.turn_detection_cooldown = Cooldown(7)
+        self.turn_detection_cooldown = Cooldown(6)
         self.wide_roi_cooldown = Cooldown(5)
         self.movedPoint = 5
         self.first_turn_detected = False
