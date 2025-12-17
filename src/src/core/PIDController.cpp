@@ -50,3 +50,8 @@ float PIDController::compute(float setpoint, float input) {
 
     return output;
 }
+
+float PIDController::getError()
+{
+    return prevError;
+}

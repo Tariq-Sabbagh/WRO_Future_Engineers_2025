@@ -5,22 +5,26 @@ Car::Car() : _motors(MOTOR_DIR1_PIN, MOTOR_DIR2_PIN, MOTOR_SPEED_PIN),
              _distSensors(ULTRASONIC_PIN_FRONT, ULTRASONIC_PIN_LEFT, ULTRASONIC_PIN_RIGHT),
              _imu(),
              _button(BUTTON_PIN),
-             _pid()
+             _pid(),
+             _encoder()
 {
-    direction = "straight";
+    // direction = "straight";
 }
 
 void Car::setup()
 {
+  
     _motors.setup();
     _steering.setup();
     _button.setup();
+    _encoder.begin();
 
     _pid.setup(STEERING_KP, 0, 0);
     _pid.setOutputLimits(-90, 90);
 
     if (!_imu.setup())
     {
+        Serial.println("IMU failed.");
         _stopAndHalt();
     }
 
@@ -57,13 +61,14 @@ void Car::_runCourse()
 
 void Car::_runLab()
 {
-    for (int segment = 0; segment < _segmentsPerLab; segment++)
+    for (int segment = 0; segment < 1; segment++)
     {
         Serial.print("Starting segment ");
         Serial.println(segment + 1);
         _goUntilTurn();
         _decideAndTurn();
     }
+       
 }
 
 void Car::_goUntilTurn()
@@ -71,7 +76,7 @@ void Car::_goUntilTurn()
     _imu.reset();
     while (true)
     {
-        _imu.update();
+         _imu.update();
         _moveStraight();
         if (_empty_on_left() or _empty_on_right())
         {
@@ -136,7 +141,6 @@ bool Car::_empty_on_left()
 {
     float frontDist = _distSensors.getFrontCm();
     float leftDist = _distSensors.getLeftCm();
-    diraction
     return (abs(_imu.getHeading()) < 15) and (frontDist > 1 && frontDist <= TURN_TRIGGER_DISTANCE_CM) and
            (leftDist > 1 && leftDist <= TURN_CLEARANCE_DISTANCE_CM);
 }
